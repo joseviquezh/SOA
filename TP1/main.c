@@ -1,3 +1,9 @@
+/*
+ * Tarea Corta I
+ * Sistemas operativos avanzados
+ * Maestría en computación, I Semestre 2019
+*/
+
 // System includes
 #include <stdio.h>
 #include <sys/types.h>
@@ -77,6 +83,8 @@ int main(int argc, char *argv[])
         return 0;
     } else {
         printf ("Could not found 'Program' name to run\n");
+        printf ("Usage: system_call_tracker [system_call_tracker options] Prog [Prog options]\n");
+        printf ("Example: ./main -v ls -lha\n");
         return 0;
     }
 }
