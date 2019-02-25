@@ -29,4 +29,4 @@ Nothing, everything works
 * **Benjamin Lewis**
 * **Jafet Chaves**
 * **Jose Viquez**
-* **Victor**
+* **Victor Arce**
