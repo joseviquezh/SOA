@@ -1,32 +1,25 @@
-# System Call Tracker (rastreador)
+Domingo 24 de Febrero
 
-## Prerequisites
+# I. TAREA 1: RASTREADOR DE “System Calls”
+El proposito de esta tarea individual es darle familiaridad con el ambiente Linux y aplicaciones de Sistemas Operativos. Toda la programacion debe realizarse en C sobre Linux. 
 
-This is what you need to compile and run this project
+Su programa tendra la mision de poner a ejecutar a otro  programa (digamosle Prog), pasarle los argumentos seleccionados por el usuario y rastrear todos los system calls utilizados por Prog.
 
-- Linux / UNIX environment
-- gcc compiler installed
-- make installed
+La sintaxis de ejecucion desde linea de comando es:
+`rastreador [opciones rastreador] Prog
+[opciones de Prog]`
 
-## User guide
+Las [opciones rastreador] podrian no venir del todo o aparecer en cualquiier orden o combinacion valida. 
 
-To run this program follow the next steps:
+En todo caso, al final de la ejecucion de Prog, rastreador siempre desplegara en la salida estandar una  tabla acumulativa que muestre todos los System Calls utilizados por Prog, asi como el nmero de veces que fue utilizado cada uno.
 
-1. Run the command `make` to generate an executable file called **rastreador**
-2. Run `./rastreador [-v|-V] Prog [Prog options]` to execute the program
-    - -v : Used to print a message everytime a system call is detected
-    - -V : Works the same way as the '-v' option with the addition that the program will wait for a keypress to continue its execution
+Las [opciones de Prog] no seran analizadas ni consideradas por rastreador, sino que simplemente seran pasadas a Prog al iniciar su ejecucion. 
 
-## Built With
+Las opciones validas para rastreador son: 
+- v desplegara un mensaje cada vez que detecte un System Call de Prog . Se debe desplegar la mayor cantidad posible de detalles respecto a cada System Call.
+- V sera identico a la opcion -v , pero hara una pausa  hasta que el usuario presione cualquier tecla para continuar la ejecucion de Prog . 
 
-* C
+Esta tarea corta se desarrollara en los grupos de  proyecto.
 
-## What doesn't work
-Nothing, everything works
-
-## Authors
-
-* **Benjamin Lewis**
-* **Jafet Chaves**
-* **Jose Viquez**
-* **Victor Arce**
+Enviar un .tgz a torresrojas.cursos@gmail.com antes de la medianoche del Domingo 24 de Febrero del 2019 cuyo nombre sea la concatenacion de los apellidos del grupo con mayusculas al inicio de cada uno (e.g., 
+Torres-Venegas-Araya.tgz) que contenga el fuente, un makefile, un readme que explique como se usa su programa, especialmente cualquier opcion extra incluida, y mencionando  todo lo que NO funcione de su proyecto. Identifique claramente su correo con el siguiente subject: [SOA] Tarea Corta 1 - Apellido 1 - Apellido 2 - etc.
