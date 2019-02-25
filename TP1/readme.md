@@ -15,7 +15,7 @@ To run this program follow the next steps:
 1. Run the command `make` to generate an executable file called **rastreador**
 2. Run `./rastreador [-v|-V] Prog [Prog options]` to execute the program
     - -v : Used to print a message everytime a system call is detected
-    - -V : Works the same way as the '-v' option with the addition that the program will wait for a keypress to conitnue its execution
+    - -V : Works the same way as the '-v' option with the addition that the program will wait for a keypress to continue its execution
 
 ## Built With
 
