@@ -1,35 +1,32 @@
 # System Call Tracker (rastreador)
 
-.
+## Prerequisites
 
-## Getting Started
+This is what you need to compile and run this project
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
-This is what you need to install and run this project
-
-```
 - Linux / UNIX environment
-```
+- gcc compiler installed
+- make installed
 
-### Installing
+## User guide
 
-To run for the first time this project follow the next steps:
+To run this program follow the next steps:
 
-```
-- Clone the repo.
-- Run the command 'make'.
-```
+1. Run the command `make` to generate an executable file called **rastreador**
+2. Run `./rastreador [-v|-V] Prog [Prog options]` to execute the program
+    - -v : Used to print a message everytime a system call is detected
+    - -V : Works the same way as the '-v' option with the addition that the program will wait for a keypress to conitnue its execution
 
 ## Built With
 
 * C
 
+## What doesn't work
+Nothing, everything works
+
 ## Authors
 
 * **Benjamin Lewis**
-* **Jafet**
-* **Jose**
+* **Jafet Chaves**
+* **Jose Viquez**
 * **Victor**

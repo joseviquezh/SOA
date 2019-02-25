@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         // Main Process
         if(child == 0) {
             ptrace(PTRACE_TRACEME, child, NULL, NULL);
-	          execl("/bin/sh","sh", "-c", programName,NULL); // Replace current process with new program.
+	          execl("/bin/sh", "sh", "-c", programName,NULL); // Replace current process with new program.
         }
         else {
             while(1) {
@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
         return 0;
     } else {
         printf ("Could not found 'Program' name to run\n");
-        printf ("Usage: system_call_tracker [system_call_tracker options] Prog [Prog options]\n");
-        printf ("Example: ./main -v ls -lha\n");
+        printf ("Usage: rastreador [-v|-V] Prog [Prog options]\n");
+        printf ("Example: ./rastreador -v ls -lha\n");
         return 0;
     }
 }
