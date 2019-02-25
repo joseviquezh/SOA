@@ -21,6 +21,12 @@ To run this program follow the next steps:
 
 * C
 
+## What extra we added
+
+* Utilities directory which contains 4 helper files
+    * syscall.h/c : used to know the name of the system call being made
+    * table.h/c : used to store and print the system calls information
+
 ## What doesn't work
 Nothing, everything works
 
