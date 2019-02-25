@@ -63,9 +63,7 @@ int main(int argc, char *argv[])
                     addRecord(orig_rax);
 
                     if (VOptionActive) {
-                        kill(child, SIGSTOP);
                         getchar();
-                        kill(child, SIGCONT);
                     }
                 } else {
                     isNotInCall = 1;
