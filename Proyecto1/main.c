@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
+#include "piApproximation.c"
 
 #define NUM_THREADS 5
 void scheduler();
@@ -34,6 +35,10 @@ void swap (int *a, int *b){
 
 
 void calculatePi(){
+    double progress=0.0;// percent
+    long long int fractionValue,fractionSpeed,log_n=0,n=0;double result;
+    LookUp* ptrPiAproximationExpro=getInitState();
+    LookUp* ptrPiAproximation_NO_Expro=getInitState();
     runningThread->executed = 1;
     if(runningThread->mode == 0){
         /*
@@ -54,9 +59,12 @@ void calculatePi(){
                 sigsetjmp(runningThread->buffer, 1);
 
                 // Do calculations
-                .
-                .
-                .
+                */
+                pi_gregory_pauseable(runningThread->workUnits*MIN_OF_WORK,ptrPiAproximationExpro);
+                //The value of pi is saved in ptrPiAproximationExpro->piSoFar
+                //1-Units=MIN_OF_WORK=50 iterations 
+                progress=runningThread->workUnits*MIN_OF_WORK*100/ptrPiAproximationExpro->iterations;
+               /*
             }
             runningThread->result = result;     // Save result in the object
             siglongjmp(parent, 1);      // Move back to the scheduler
@@ -66,6 +74,15 @@ void calculatePi(){
         /*
             Non-expropiative: do a specific work percentage
         */
+
+        fractionSpeed=runningThread->workPercentage; 
+        fractionValue=(long int)(runningThread->workUnits*MIN_OF_WORK/fractionSpeed);
+        while(fractionSpeed-->0){
+            pi_gregory_pauseable(fractionValue,ptrPiAproximation_NO_Expro);
+            printf("At %lld percent it looks like %.64lf \n",(runningThread->workPercentage-fractionSpeed),ptrPiAproximation_NO_Expro->piSoFar);
+            printf("AQUI EL HILO DEBE SOLTAR EL PROCESADOR------------------");
+        }
+        //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
 
         /*
             sigsetjmp(runningThread->buffer, 1);    // Save chackpoint so we can return later

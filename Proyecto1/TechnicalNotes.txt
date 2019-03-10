@@ -1,0 +1,9 @@
+Compile Approximations
+ gcc -o pi piApproximation.c -lm
+
+
+ Run tests
+ ./pi 
+
+
+ To run all pi caculation methods go to the main in piApproximation.c  and dis-comment all lines  
