@@ -3,17 +3,28 @@
 #include <setjmp.h>
 #include <time.h>
 
+#define NUM_THREADS 5
 void scheduler();
 
-int NUM_THREADS = 6;            // Number of threads to work with
-int EXPROPIATIVE_MODE = 0;      // Operation move for each thread
+typedef struct{
+	int id;
+    int mode;              // 0 expropiative, 1 Non expropiative
+	int result;            // pi calculation result/progress
+    int executed;          // To know if the thread has been executed yet
+    int workUnits;         // Amount of work units
+    int workPercentage;    // Between 0-100%
+	int numTickets;        // Number of assigned tickets
+    int* tickets;          // Lottery tickets
+	sigjmp_buf buffer;     // Thread buffer
+} Thread;
+
+
 int QUANTUM_SISE = 1000;        // Defined in miliseconds
 int NUM_TICKETS = 0;            // Total ammount of tickets to be assigned
-int WORKLOAD = 0;               // Workload for each thread
-jmp_buf *THREADS_BUFFER;        // Buffer for each thread. 0 is the parent
-int *THREADS_RESULTS;           // Results for each thread calculation. Starting from 1, since the parent only manages
-int *THREADS_TICKETS;           // Tickets of each thread. Starting from 1, since the parent only manages
-int *THREADS_NUM_TICKETS;       // Amount of tickets per thread. Starting from 1, since the parent only manages
+Thread* THREADS[NUM_THREADS];
+Thread* runningThread;
+sigjmp_buf parent;
+
 
 void swap (int *a, int *b){
     int temp = *a;
@@ -22,26 +33,55 @@ void swap (int *a, int *b){
 }
 
 
-void doWork(int threadId){
-    // Initialize the threads context
-    printf("Initializing thread %d\n", threadId);
-    THREADS_RESULTS[threadId] = 0;
-    threadId = sigsetjmp(THREADS_BUFFER[threadId], 1);
-    if(threadId == 0) siglongjmp(THREADS_BUFFER[0], 1);
+void calculatePi(){
+    runningThread->executed = 1;
+    if(runningThread->mode == 0){
+        /*
+            Expropiative: do work during a certaing amount of time
 
-    // Do the calculations in the defined quantum
+            sigsetjmp -> Saves a checkpoint (stored in runningThread->buffer)
+            siglongjmp -> Moves to a checkpoint (stored in parent)
+        */
+        /*
+            // Since the time could end at any point, need to continously save the progress
+            while(time){
+                // Do calculations
+                runningThread->result = result;
+                sigsetjmp(runningThread->buffer, 1);
+
+                // Do calculations
+                runningThread->result = result;
+                sigsetjmp(runningThread->buffer, 1);
+
+                // Do calculations
+                .
+                .
+                .
+            }
+            runningThread->result = result;     // Save result in the object
+            siglongjmp(parent, 1);      // Move back to the scheduler
+        */
+    }
+    else{
+        /*
+            Non-expropiative: do a specific work percentage
+        */
+
+        /*
+            sigsetjmp(runningThread->buffer, 1);    // Save chackpoint so we can return later
+            while(runningThread->workPercentage > completedWorkPercentage){
+                // Do calculations
+            }
+            runningThread->result = result;     // Save result in the object
+            siglongjmp(parent, 1);      // Move back to the scheduler
+        */
+    }
+
     for(int i = 0; i < 10; ++i){
-        // This is just an example of some work
-        printf("Thread %d is doing some work\n", threadId);
-        THREADS_RESULTS[threadId] += threadId;
-        printf("    Thread %d result is %d\n", threadId, THREADS_RESULTS[threadId]);
-        // End of the example
-
-        // Once the quantum have expired, move back to the schedler context
-        threadId = sigsetjmp(THREADS_BUFFER[threadId], 1);
-        if(threadId == 0) siglongjmp(THREADS_BUFFER[0], threadId);
+        if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
     }
 }
+
 
 void scheduler(){
     // Create an array with all the ticket numbers
@@ -60,72 +100,98 @@ void scheduler(){
 
     // Assign the corresponding amount of tickets to each thread
     int startIndex = 0, endIndex = 0;
-    for(int threadId = 1; threadId < NUM_THREADS; ++threadId){
+    for(int threadId = 0; threadId < NUM_THREADS; ++threadId){
         startIndex = endIndex;
-        endIndex += THREADS_NUM_TICKETS[threadId];
-        for(int i = 0; i < THREADS_NUM_TICKETS[threadId]; ++i){
-            THREADS_TICKETS[threadId * NUM_TICKETS + i] = tickets[startIndex++];
+        endIndex += THREADS[threadId]->numTickets;
+        for(int i = 0; i < THREADS[threadId]->numTickets; ++i){
+            THREADS[threadId]->tickets[i] = tickets[startIndex++];
         }
     }
 
-    // Randomly select a winning ticket (at the moment, only select 5 winners)
-    for(int i = 0; i < 5; ++i){
+
+    // Shuffle the tickts array
+    for (int i = NUM_TICKETS-1; i > 0; i--){
+        int j = rand() % (i+1);
+        swap(&tickets[i], &tickets[j]);
+    }
+
+    // Randomly select a winning ticket until there are no tickets
+    for(int i = 0; i < NUM_TICKETS; ++i){
         printf("Selecting a wining ticket\n");
-        int ticket = (rand() % (NUM_TICKETS - 1) ) + 1;
+        int ticket = tickets[i];
         int threadId;
         int winnerFound = 0;
-        for(threadId = 1; threadId < NUM_THREADS; ++threadId){
-            for(int j = 0; j < THREADS_NUM_TICKETS[threadId]; ++j){
-                if (THREADS_TICKETS[threadId * NUM_TICKETS + j] == ticket){
+        for(threadId = 0; threadId < NUM_THREADS; ++threadId){
+            for(int j = 0; j < THREADS[threadId]->numTickets; ++j){
+                if (THREADS[threadId]->tickets[j] == ticket){
                     winnerFound = 1;
                     break;
                 }
             }
             if(winnerFound) break;
         }
-        // printf("The winning ticket is %d and the winner is %d\n", ticket, threadId);
-        if(sigsetjmp(THREADS_BUFFER[0], 1) == 0) siglongjmp(THREADS_BUFFER[threadId], threadId);
+        printf("The winning ticket is %d and the winner is %d\n", ticket, threadId);
+        runningThread = THREADS[threadId];
+        if(runningThread->executed){
+            if(sigsetjmp(parent, 1) == 0) siglongjmp(THREADS[threadId]->buffer, threadId);
+        }
+        else{
+            if(sigsetjmp(parent, 1) == 0) calculatePi();
+        }
     }
 }
 
+
 int main(int argc, char *argv[]){
-    // Know the amount of threads to be used
-    int threads;
+    int mode = 1;
     do{
-        printf( "Enter the amount of threads: ");
-        scanf ("%d",&threads);
-    }while(threads < 5);
-    NUM_THREADS = threads + 1;
+        printf( "How should the threads work? 0 == Expropiative 1 == Non-expropiative: ");
+        scanf ("%d",&mode);
+    }while(mode != 0 && mode !=1);
 
-    // Initialize global variables depending on the user input
-    THREADS_BUFFER = malloc(NUM_THREADS * sizeof(jmp_buf));
-    THREADS_RESULTS = malloc(NUM_THREADS * sizeof(int));
-    THREADS_NUM_TICKETS = malloc(NUM_THREADS * sizeof(int));
+    int workPercentage= 0;
+    if(mode == 0){
+        do{
+            printf( "Enter the work percentage at wich the thread will stop its execution. Mimimum 1: ");
+            scanf ("%d",&workPercentage);
+        }while(workPercentage < 1);
+    }
 
-    // Know the amount of tickets per thread
-    for(int i = 1; i < NUM_THREADS; ++i){
+    int workUnits= 0;
+    do{
+        printf( "Enter the work units for each thread. Minimum 50: ");
+        scanf ("%d",&workUnits);
+    }while(workUnits < 50);
+
+    // Initialize all the threads
+    for(int thread = 0; thread < NUM_THREADS; ++thread){
+        THREADS[thread] = (Thread*) malloc(sizeof(Thread));
+
+        // Know the amount of tickets per thread
         int tickets;
         do{
-            printf("Enter the amount of tickets for thread %d: ", i);
+            printf("Enter the amount of tickets for thread %d: ", thread);
             scanf ("%d",&tickets);
         }while(tickets < 1);
-        THREADS_NUM_TICKETS[i] = tickets;
+
+        THREADS[thread]->id = thread;
+        THREADS[thread]->mode = mode;
+        THREADS[thread]->result = 0;
+        THREADS[thread]->executed = 0;
+        THREADS[thread]->workPercentage = workPercentage;
+        THREADS[thread]->workUnits = workUnits;
+        THREADS[thread]->numTickets = tickets;
+        THREADS[thread]->tickets = malloc(tickets * sizeof(int));
         NUM_TICKETS += tickets;
     }
 
-    THREADS_TICKETS = malloc(NUM_THREADS * NUM_TICKETS * sizeof(int));
+    // Call the scheduler to strart the program
+    scheduler();
 
-    // Initialize all threads contexts
-    for(int threadId = 1; threadId < NUM_THREADS; ++threadId){
-        if(sigsetjmp(THREADS_BUFFER[0], 1) == 0) doWork(threadId);
+    // Free allocatied memory
+    for(int thread = 0; thread < NUM_THREADS; ++thread){
+        free(THREADS[thread]->tickets);
     }
 
-    // Call the scheduler to strart the program
-    //scheduler();
-
-    free(THREADS_BUFFER);
-    free(THREADS_RESULTS);
-    free(THREADS_NUM_TICKETS);
-    free(THREADS_TICKETS);
     return(0);
 }
