@@ -20,7 +20,7 @@ struct piProgress{
     double sign;
     double piSoFar;
     long long iterations;
-}; 
+};
 typedef struct piProgress LookUp;
 
 ///////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ void pi_gregory_pauseable(long long int n,LookUp* ptrProgress){
 
 LookUp* getInitState(){
    LookUp* ptrPiAproximation=(LookUp*)malloc(sizeof(LookUp));
-   ptrPiAproximation->piSoFar=0; 
+   ptrPiAproximation->piSoFar=0;
     ptrPiAproximation->result = 0;
     ptrPiAproximation->divisor = 1;
     ptrPiAproximation->sign = 1;
@@ -107,9 +107,9 @@ void testPi_gregory(){
         while(fractionSpeed-->0){
             pi_gregory_pauseable(fractionValue,ptrPiAproximationNOExpro);
             printf("At %lld percent it looks like %.64lf \n",10*(10-fractionSpeed),ptrPiAproximationNOExpro->piSoFar);
-        
+
             printf("AQUI EL HILO DEBE SOLTAR EL PROCESADOR------------------");
-        
+
         }
         printf("FINAL %.64lf  with %lld iterations\n---------------------\n" , ptrPiAproximationNOExpro->piSoFar, n);
     }
@@ -221,8 +221,8 @@ double piCaller(int workQuantity){
 }
 
 
-int main(){
+/*int main(){
     testPi_gregory();
     //testPi_archimedes();
    // testPi_chudnovsky();
-}
+}*/

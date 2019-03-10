@@ -62,7 +62,7 @@ void calculatePi(){
                 */
                 pi_gregory_pauseable(runningThread->workUnits*MIN_OF_WORK,ptrPiAproximationExpro);
                 //The value of pi is saved in ptrPiAproximationExpro->piSoFar
-                //1-Units=MIN_OF_WORK=50 iterations 
+                //1-Units=MIN_OF_WORK=50 iterations
                 progress=runningThread->workUnits*MIN_OF_WORK*100/ptrPiAproximationExpro->iterations;
                /*
             }
@@ -75,12 +75,13 @@ void calculatePi(){
             Non-expropiative: do a specific work percentage
         */
 
-        fractionSpeed=runningThread->workPercentage; 
+        fractionSpeed=runningThread->workPercentage;
         fractionValue=(long int)(runningThread->workUnits*MIN_OF_WORK/fractionSpeed);
         while(fractionSpeed-->0){
             pi_gregory_pauseable(fractionValue,ptrPiAproximation_NO_Expro);
             printf("At %lld percent it looks like %.64lf \n",(runningThread->workPercentage-fractionSpeed),ptrPiAproximation_NO_Expro->piSoFar);
             printf("AQUI EL HILO DEBE SOLTAR EL PROCESADOR------------------");
+			if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
         }
         //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
 
@@ -94,9 +95,9 @@ void calculatePi(){
         */
     }
 
-    for(int i = 0; i < 10; ++i){
+    /*for(int i = 0; i < 10; ++i){
         if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
-    }
+    }*/
 }
 
 
