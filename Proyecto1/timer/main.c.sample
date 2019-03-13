@@ -1,0 +1,45 @@
+// System includes
+// Must be included in the real main.c, or where the threads are handle, switch, etc.
+#include <stdio.h>
+#include <time.h>
+#include <signal.h>
+#include <sys/time.h>
+
+// Custom includes
+#include "timer.h"
+
+#include <math.h> // this will not be necessary, just for function to simulate long process.
+
+int count = 0;
+/* 
+    Callback that is fired after timer is finished, 
+    Here the process of the thread must be saved and must be the siglongjmp to the main process.
+*/
+void timerHandler(int pSig)
+{
+	printf("Time is up!!! \n");
+  
+  // sigsetjmp(runningThread->buffer, 1
+  // siglongjmp(jmpBuffer, 1);
+}
+
+// Just to simulate long running process to test the timer.
+double calculatePi (int pSequences) {
+  int counter;
+  float pi1 = 1.0f / 2.0f;
+  float pi2 = 1.0f / 3.0f;
+  for (counter = 1; counter <= pSequences * 50; counter = counter + 1) {
+    //printf("%d | pi1 = %.12f, pi2 = %.12f\n", counter, pi1, pi2);
+    pi1 = pi1 + pow(-1, counter) * (pow(1.0f / 2.0f, (2 * counter) + 1) / ((2 * counter) + 1));
+    pi2 = pi2 + pow(-1, counter) * (pow(1.0f / 3.0f, (2 * counter) + 1) / ((2 * counter) + 1));
+  }
+  return 4 * (pi1 + pi2);
+}
+
+int main(int argc, char *argv[])
+{
+    setUpTimer (timerHandler); // Must be always at the beginning of the main process.
+    
+    setTimer (1); // Function to start the timer with specific interval
+    calculatePi(30); // Just to simulate long running process to test the timer.
+}
