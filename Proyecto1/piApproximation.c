@@ -117,6 +117,45 @@ void testPi_gregory(){
 }
 
 
+int validateParaetersNoExpropiatives(int workUnits,int percentage){
+    return workUnits>0&&percentage>0&&percentage<101;
+}
+
+void noExpropiativeCaller(int workUnits,int percentage){
+    /*Try Gregory's series*/
+    long long int i,fractionValue,fractionValueAdjusted,totalWork=workUnits*50;
+    LookUp* ptrPiAproximationNOExpro=getInitState();
+
+    printf("\n\n\nCall funtion in NO expropiative mode every %d perc \n",percentage);
+    printf("Calculate iterations of Gregory's series\n");
+    if(validateParaetersNoExpropiatives(workUnits,percentage)){
+        fractionValue=totalWork*percentage/100;
+        fractionValueAdjusted=fractionValue;
+        i=(long long int)totalWork/fractionValue;
+        printf("Total work %lld processing %lld per %lld iteration \n",totalWork,fractionValue,i);
+        while(i-->=0&&fractionValueAdjusted>0){
+            pi_gregory_pauseable(fractionValueAdjusted,ptrPiAproximationNOExpro);
+            printf("At %lld percent it looks like %.64lf ",i+1>0?(long long int)((totalWork/fractionValue-i)*percentage):100,ptrPiAproximationNOExpro->piSoFar);
+            if(fractionValueAdjusted>totalWork-ptrPiAproximationNOExpro->iterations)
+            fractionValueAdjusted=totalWork-ptrPiAproximationNOExpro->iterations;
+            printf("AQUI EL HILO DEBE SOLTAR EL PROCESADOR------------------\n");
+        }
+        printf("FINAL %.64lf  with %lld iterations\n---------------------\n" , ptrPiAproximationNOExpro->piSoFar, ptrPiAproximationNOExpro->iterations);
+    }else{
+        printf("Incorrect parameters for: percentage: %d or workunits: %d",percentage,workUnits);
+    }
+}
+
+void testNoExpropiative(){
+    int i=0;
+    for(i=10;i<=100;i+=10){
+      printf("\n\n-----------------\nRelease the processor every %d percentage of work completed\n-------------\n",i);
+      noExpropiativeCaller(1000000,i);
+      scanf("break");
+    }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////
 ////////////////Archimedes///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -220,9 +259,8 @@ double piCaller(int workQuantity){
     return pi_gregory(workQuantity*MIN_OF_WORK);
 }
 
-
-/*int main(){
-    testPi_gregory();
-    //testPi_archimedes();
-   // testPi_chudnovsky();
-}*/
+/*
+int main(){
+    testNoExpropiative();
+}
+*/
