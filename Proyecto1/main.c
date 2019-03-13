@@ -36,9 +36,11 @@ void swap (int *a, int *b){
 
 void calculatePi(){
     double progress=0.0;// percent
-    long long int fractionValue,fractionSpeed,log_n=0,n=0;double result;
+    long long int i,fractionValue,fractionValueAdjusted,totalWork;
     LookUp* ptrPiAproximationExpro=getInitState();
-    LookUp* ptrPiAproximation_NO_Expro=getInitState();
+    LookUp* ptrPiAproximationNOExpro=getInitState();
+    
+
     runningThread->executed = 1;
     if(runningThread->mode == 0){
         /*
@@ -60,10 +62,13 @@ void calculatePi(){
 
                 // Do calculations
                 */
+            if(runningThread->workUnits>0){
                 pi_gregory_pauseable(runningThread->workUnits*MIN_OF_WORK,ptrPiAproximationExpro);
                 //The value of pi is saved in ptrPiAproximationExpro->piSoFar
-                //1-Units=MIN_OF_WORK=50 iterations
-                progress=runningThread->workUnits*MIN_OF_WORK*100/ptrPiAproximationExpro->iterations;
+                progress=ptrPiAproximationExpro->iterations*100/(runningThread->workUnits*MIN_OF_WORK);
+            }else{
+                printf("\nIncorrect parameters for: workunits: %d\n",runningThread->workUnits);
+            }
                /*
             }
             runningThread->result = result;     // Save result in the object
@@ -74,17 +79,25 @@ void calculatePi(){
         /*
             Non-expropiative: do a specific work percentage
         */
-
-        fractionSpeed=runningThread->workPercentage;
-        fractionValue=(long int)(runningThread->workUnits*MIN_OF_WORK/fractionSpeed);
-        while(fractionSpeed-->0){
-            pi_gregory_pauseable(fractionValue,ptrPiAproximation_NO_Expro);
-            printf("At %lld percent it looks like %.64lf \n",(runningThread->workPercentage-fractionSpeed),ptrPiAproximation_NO_Expro->piSoFar);
-            printf("AQUI EL HILO DEBE SOLTAR EL PROCESADOR------------------");
-			if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
+        if(validateParaetersNoExpropiatives(runningThread->workUnits,runningThread->workPercentage)){
+            fractionValue=totalWork*runningThread->workPercentage/100;
+            fractionValueAdjusted=fractionValue;
+            i=(long long int)totalWork/fractionValue;
+            printf("Total work %lld processing %lld per %lld iteration \n",totalWork,fractionValue,i);
+            while(i-->=0&&fractionValueAdjusted>0){
+                pi_gregory_pauseable(fractionValueAdjusted,ptrPiAproximationNOExpro);
+                //TO PROGRESS PERCENTAGE UNTIL NOW     ->     i+1>0?(long long int)((totalWork/fractionValue-i)*runningThread->workPercentage):100
+                //VALUE OF PI UNTIL NOW                ->     ptrPiAproximationNOExpro->piSoFar
+                if(fractionValueAdjusted>totalWork-ptrPiAproximationNOExpro->iterations)
+                fractionValueAdjusted=totalWork-ptrPiAproximationNOExpro->iterations;
+                printf("This line has be replaced with the command required to release the thread.\n");
+            }
+            // TO CONSULT FINAL VULE OF PI             ->     ptrPiAproximationNOExpro->piSoFar
+            // TO CONSULT THE TOTAL ITERATIONS DONE    ->     ptrPiAproximationNOExpro->iterations
+        }else{
+            printf("\nIncorrect parameters for: percentage: %d or workunits: %d\n",runningThread->workPercentage,runningThread->workUnits);
         }
         //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
-
         /*
             sigsetjmp(runningThread->buffer, 1);    // Save chackpoint so we can return later
             while(runningThread->workPercentage > completedWorkPercentage){
@@ -95,9 +108,9 @@ void calculatePi(){
         */
     }
 
-    /*for(int i = 0; i < 10; ++i){
+    for(int i = 0; i < 10; ++i){
         if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
-    }*/
+    }
 }
 
 
