@@ -161,7 +161,7 @@ void calculatePi(){
                 //The value of pi is saved in ptrPiAproximationExpro->piSoFar
                 progress=ptrPiAproximationExpro->iterations*100/(runningThread->workUnits*MIN_OF_WORK);
             }else{
-                printf("Incorrect parameters for: workunits: %d",runningThread->workUnits);
+                printf("\nIncorrect parameters for: workunits: %d\n",runningThread->workUnits);
             }
                /*
             }
@@ -189,7 +189,7 @@ void calculatePi(){
             // TO CONSULT FINAL VULE OF PI             ->     ptrPiAproximationNOExpro->piSoFar
             // TO CONSULT THE TOTAL ITERATIONS DONE    ->     ptrPiAproximationNOExpro->iterations
         }else{
-            printf("Incorrect parameters for: percentage: %d or workunits: %d",runningThread->workPercentage,runningThread->workUnits);
+            printf("\nIncorrect parameters for: percentage: %d or workunits: %d\n",runningThread->workPercentage,runningThread->workUnits);
         }
         //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
         /*
