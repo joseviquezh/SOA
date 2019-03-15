@@ -2,37 +2,131 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
+#include <stdbool.h>
 #include "piApproximation.c"
+#include "gui.h"
 
 #define NUM_THREADS 5
-void scheduler();
+#define MINIMUN_WORK_UNIT 50
 
 typedef struct{
-	int id;
-    int mode;              // 0 expropiative, 1 Non expropiative
-	int result;            // pi calculation result/progress
-    int executed;          // To know if the thread has been executed yet
-    int workUnits;         // Amount of work units
-    int workPercentage;    // Between 0-100%
-	int numTickets;        // Number of assigned tickets
-    int* tickets;          // Lottery tickets
-	sigjmp_buf buffer;     // Thread buffer
+    int id;
+    int mode;               /* 0 expropiatory, 1 Non expropiatory */
+    int result;             /* pi calculation result/progress */
+    int executed;           /* To know if the thread has been executed yet */
+    int workUnits;          /* Amount of work units */
+    int workPercentage;     /* Between 0-100% */
+    int numTickets;         /* Number of assigned tickets */
+    int* tickets;           /* Lottery tickets */
+    int quantum;            /* Lottery tickets*/
+    sigjmp_buf buffer;      /* Thread buffer */
 } Thread;
 
+/* Configuration data retrieved from the GUI */
+struct thread_configuration{
+    int mode; /* 0 expropiatory, 1 Non expropiatory */
+    int threads_number;
+    int number_tickets;
+    int amount_work;
+    int quantum;
+};
 
-int QUANTUM_SISE = 1000;        // Defined in miliseconds
-int NUM_TICKETS = 0;            // Total ammount of tickets to be assigned
+int NUM_TICKETS = 0;            /* Total ammount of tickets to be assigned */
 Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
+struct thread_configuration config;
+GuiObjects  *gui=NULL;
 
+void scheduler();
+
+G_MODULE_EXPORT void
+create_about_page (GtkButton *button)
+{
+    GtkWidget *about_window = NULL;
+    GtkWidget *text = NULL;
+
+    /* Create the window */
+    about_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    /* Edit the name of the window */
+    gtk_window_set_title(GTK_WINDOW(about_window), "About");
+    /* Set the size of the window */
+    gtk_window_set_default_size(GTK_WINDOW(about_window), 640, 480);
+    /* Text box shown in the window */
+    text = gtk_label_new ("Instituto Tecnológico de Costa Rica\n\n"\
+                            "MC-6004 - Sistemas Operativos Avanzados\n\n"\
+                            "Proyecto I: Loterı́a de Threads (v0.1)\n\n"\
+                            "Estudiantes:\n"\
+                            "   Jose Víquez\n"\
+                            "   Benjamin Lewis\n"\
+                            "   Jafet Chaves\n"\
+                            "   Víctor Arce\n\n"\
+                            "Supervisado por: Phd. Francisco Torres Rojas\n\n\n\n");
+    /* Add the text widget to the window */
+    gtk_container_add(GTK_CONTAINER(about_window), text);
+    /* Show the window */
+    gtk_widget_show_all(about_window);
+}
+
+G_MODULE_EXPORT void
+button_clicked (GtkButton *button)
+{
+    g_print( "Thread scheduling started\n" );
+    g_print("Number of tickets: %d\n", config.number_tickets);
+    g_print("Amount of work: %d\n", config.amount_work);
+    g_print("Quantum: %d\n", config.quantum);
+    g_print("Mode: %d\n", config.mode);
+
+    /* Initialize all the threads */
+    for(int thread = 0; thread < NUM_THREADS; ++thread){
+        THREADS[thread] = (Thread*) malloc(sizeof(Thread));
+        THREADS[thread]->id = thread;
+        THREADS[thread]->mode = config.mode;
+        THREADS[thread]->result = 0;
+        THREADS[thread]->executed = 0;
+        THREADS[thread]->workPercentage = 0;
+        THREADS[thread]->workUnits = config.amount_work*MINIMUN_WORK_UNIT;
+        THREADS[thread]->numTickets = config.number_tickets;
+        THREADS[thread]->tickets = malloc(config.number_tickets * sizeof(int));
+        THREADS[thread]->quantum = config.quantum;
+    }
+
+    /*Disable execute button after execution taking effect*/
+    gtk_widget_set_sensitive (GTK_WIDGET(button), FALSE);
+
+    // Call the scheduler to start the program
+    scheduler();
+}
+
+G_MODULE_EXPORT void
+entry_activate_number_tickets (GtkEntry *entry)
+{
+    config.number_tickets = atoi(gtk_entry_get_text (entry));
+}
+
+G_MODULE_EXPORT void
+entry_activate_amount_work (GtkEntry *entry)
+{
+    config.amount_work = atoi(gtk_entry_get_text (entry));
+}
+
+G_MODULE_EXPORT void
+entry_activate_quantum (GtkEntry *entry)
+{
+    config.quantum = atoi(gtk_entry_get_text (entry));
+}
+
+G_MODULE_EXPORT void
+activate_combo_box (GtkComboBox *combo_box)
+{
+    config.mode = gtk_combo_box_get_active (GTK_COMBO_BOX(combo_box));
+}
 
 void swap (int *a, int *b){
     int temp = *a;
     *a = *b;
     *b = temp;
 }
-
 
 void calculatePi(){
     double progress=0.0;// percent
@@ -100,8 +194,8 @@ void calculatePi(){
     }*/
 }
 
-
 void scheduler(){
+    printf("Entered scheduler\n");
     // Create an array with all the ticket numbers
     int tickets[NUM_TICKETS];
     for(int i = 0; i < NUM_TICKETS; ++i){
@@ -159,57 +253,80 @@ void scheduler(){
     }
 }
 
+GuiObjects * init_gui(GuiObjects  *gui){
+
+    GtkBuilder  *builder; /* To generate GtkWidgets from XML */
+    GError  *error = NULL;
+    gchar   *message = NULL;
+
+    /* Create new GtkBuilder object */
+    builder = gtk_builder_new();
+    /* Load GUI from file. If error occurs, report it and quit application */
+    if( ! gtk_builder_add_from_file( builder, GUI_FILE, &error ) )
+    {
+        g_warning( "%s", error->message );
+        g_free( error );
+    }
+
+    /* Allocate data structure */
+    gui = g_slice_new( GuiObjects );
+
+    /* Get objects required to change dinamically from the GUI */
+    GW( main_window );
+    GW( about_window );
+    GW( bar0 );
+    GW( text_box0 );
+    GW( spin0 );
+    GW( bar1 );
+    GW( text_box1 );
+    GW( spin1 );
+    GW( bar2 );
+    GW( text_box2 );
+    GW( spin2 );
+    GW( bar3 );
+    GW( text_box3 );
+    GW( spin3 );
+    GW( bar4 );
+    GW( text_box4 );
+    GW( spin4 );
+    GW( combo_box0 );
+    GW( entry_number_threads );
+    GW( entry_number_tickets );
+    GW( entry_amount_work );
+    GW( entry_quantum );
+
+    /* Connect signals */
+    gtk_builder_connect_signals( builder, gui->main_window );
+
+    /* Destroy builder, since we don't need it anymore */
+    g_object_unref( G_OBJECT( builder ) );
+
+    return gui;
+}
 
 int main(int argc, char *argv[]){
-    int mode = 1;
-    do{
-        printf( "How should the threads work? 0 == Expropiative 1 == Non-expropiative: ");
-        scanf ("%d",&mode);
-    }while(mode != 0 && mode !=1);
 
-    int workPercentage= 0;
-    if(mode == 0){
-        do{
-            printf( "Enter the work percentage at wich the thread will stop its execution. Mimimum 1: ");
-            scanf ("%d",&workPercentage);
-        }while(workPercentage < 1);
-    }
+    /* Init GTK+ */
+    gtk_init( &argc, &argv );
 
-    int workUnits= 0;
-    do{
-        printf( "Enter the work units for each thread. Minimum 50: ");
-        scanf ("%d",&workUnits);
-    }while(workUnits < 50);
+    /* Init GUI struct */
+    gui = init_gui(gui);
 
-    // Initialize all the threads
-    for(int thread = 0; thread < NUM_THREADS; ++thread){
-        THREADS[thread] = (Thread*) malloc(sizeof(Thread));
+    /*Set the GtkWindow to appear*/
+    gtk_widget_show(gui->main_window);
 
-        // Know the amount of tickets per thread
-        int tickets;
-        do{
-            printf("Enter the amount of tickets for thread %d: ", thread);
-            scanf ("%d",&tickets);
-        }while(tickets < 1);
+    /* Get the configuration from the GUI */
 
-        THREADS[thread]->id = thread;
-        THREADS[thread]->mode = mode;
-        THREADS[thread]->result = 0;
-        THREADS[thread]->executed = 0;
-        THREADS[thread]->workPercentage = workPercentage;
-        THREADS[thread]->workUnits = workUnits;
-        THREADS[thread]->numTickets = tickets;
-        THREADS[thread]->tickets = malloc(tickets * sizeof(int));
-        NUM_TICKETS += tickets;
-    }
+    /* Main Gtk loop */
+    gtk_main();
 
-    // Call the scheduler to strart the program
-    scheduler();
-
-    // Free allocatied memory
+    /* Free allocated memory */
     for(int thread = 0; thread < NUM_THREADS; ++thread){
         free(THREADS[thread]->tickets);
     }
+
+    /* Free any allocated data */
+    g_slice_free(GuiObjects, gui);
 
     return(0);
 }

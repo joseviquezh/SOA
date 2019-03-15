@@ -34,6 +34,7 @@
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="create_about_page" swapped="no"/>
                       </object>
@@ -117,6 +118,7 @@
                 <property name="can_focus">True</property>
                 <property name="placeholder_text" translatable="yes">Type a number</property>
                 <property name="input_purpose">number</property>
+                <signal name="activate" handler="entry_activate_number_tickets" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -129,6 +131,7 @@
                 <property name="can_focus">True</property>
                 <property name="placeholder_text" translatable="yes">Type a number</property>
                 <property name="input_purpose">number</property>
+                <signal name="activate" handler="entry_activate_quantum" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">3</property>
@@ -141,6 +144,7 @@
                 <property name="can_focus">True</property>
                 <property name="placeholder_text" translatable="yes">Type a number</property>
                 <property name="input_purpose">number</property>
+                <signal name="activate" handler="entry_activate_amount_work" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -162,11 +166,11 @@
               <object class="GtkComboBoxText" id="combo_box0">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="active">0</property>
                 <items>
-                  <item id="0" translatable="yes">Expropiativo</item>
-                  <item id="1" translatable="yes">No Expropiativo</item>
+                  <item id="0" translatable="yes">Expropriatory</item>
+                  <item id="1" translatable="yes">Not expropriatory</item>
                 </items>
+                <signal name="changed" handler="activate_combo_box" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
