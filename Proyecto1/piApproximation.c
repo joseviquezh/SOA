@@ -51,6 +51,7 @@ void pi_gregory_pauseable(long long int n,LookUp* ptrProgress){
     Calculate n iterations of Gregory's series
     https://www.craig-wood.com/nick/articles/pi-gregorys-series/
     */
+
     int i=0;
     for (i=0;i<n;i++){
         ptrProgress->result += ptrProgress->sign / ptrProgress->divisor;
@@ -58,6 +59,14 @@ void pi_gregory_pauseable(long long int n,LookUp* ptrProgress){
         ptrProgress->sign = -1*ptrProgress->sign;
         ptrProgress->iterations++;
     }
+    ptrProgress->piSoFar=4 * ptrProgress->result;
+}
+
+void pi_gregory_pauseable_2(LookUp* ptrProgress){
+    ptrProgress->result += ptrProgress->sign / ptrProgress->divisor;
+    ptrProgress->divisor += 2;
+    ptrProgress->sign = -1*ptrProgress->sign;
+    ptrProgress->iterations++;
     ptrProgress->piSoFar=4 * ptrProgress->result;
 }
 
@@ -118,7 +127,7 @@ void testPi_gregory(){
 
 
 int validateParaetersNoExpropiatives(int workUnits,int percentage){
-    return workUnits>0&&percentage>0&&percentage<101;
+    return workUnits>0&&percentage<0&&percentage<101;
 }
 
 void noExpropiativeCaller(int workUnits,int percentage){
