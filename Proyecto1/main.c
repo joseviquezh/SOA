@@ -35,6 +35,8 @@ typedef struct{
     GtkWidget *bar;
     GtkWidget *text_box;
     GtkWidget *spin;
+    //--------
+    int iterations;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
@@ -105,6 +107,8 @@ button_clicked (GtkButton *button)
         THREADS[thread]->tickets = malloc(config->number_tickets * sizeof(int));
         THREADS[thread]->numer= 4.0;
         THREADS[thread]->denom= 0;
+        THREADS[thread]->iterations= 0;
+        
         /* Add the tickets of each individual thread */
         NUM_TICKETS += THREADS[thread]->numTickets;
     }
@@ -176,9 +180,15 @@ void swap (int *a, int *b){
     *b = temp;
 }
 
-void calculatePi(){
-    gchar *message = NULL;
 
+void updateUI(){
+    double progress=runningThread->iterations/runningThread->workUnits;
+    gchar* message = g_strdup_printf ("PID: %d/ %f", runningThread->id, progress);
+    gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
+    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress);
+    gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result));
+}
+void calculatePi(){
     gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
 
     runningThread->executed = 1;
@@ -204,6 +214,7 @@ void calculatePi(){
     */
 
     for(int piTerm = 0; piTerm < runningThread->workUnits; ++piTerm){
+        runningThread->iterations++;
         runningThread->denom = (2 * piTerm + 1);
         sigsetjmp(runningThread->buffer, 1);
         double term = runningThread->numer/runningThread->denom;
@@ -220,8 +231,8 @@ void calculatePi(){
         if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
             if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
             calculatedTerms = 0;
+
         }
-        gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result));
         while (gtk_events_pending()){
             gtk_main_iteration();
         }
@@ -229,12 +240,6 @@ void calculatePi(){
     while (gtk_events_pending()){
         gtk_main_iteration();
     }
-    progress = 50;
-    message = g_strdup_printf ("PID: %d/%f", runningThread->id, progress);
-    gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
-    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress/100);
-
-    gtk_spinner_stop(GTK_SPINNER(THREADS[runningThread->id]->spin));
 
     printf("DEBUG: Process %d ended its execution\n", runningThread->id);
     sigsetjmp(runningThread->buffer, 1);
@@ -245,6 +250,7 @@ void calculatePi(){
 void scheduler(){
     // Create an array with all the ticket numbers
     int tickets[NUM_TICKETS];
+    gchar *message = NULL;
     for(int i = 0; i < NUM_TICKETS; ++i){
         // Choose a random and unique number
         tickets[i] = i + 1;
@@ -267,6 +273,7 @@ void scheduler(){
         }
     }
 
+            
 
     // Shuffle the tickts array
     for (int i = NUM_TICKETS-1; i > 0; i--){
@@ -296,6 +303,7 @@ void scheduler(){
             printf("DEBUG: The winning ticket is %d and the winner is %d\n", ticket, threadId);
             runningThread = THREADS[threadId];
             if(runningThread->finnished == 0){
+                updateUI();
                 if(sigsetjmp(parent, 1) == 0){
                     if(runningThread->mode == 0){
                         setUpTimer(timerHandler);
@@ -310,8 +318,10 @@ void scheduler(){
                         calculatePi();
                     }
                 }
+                gtk_spinner_stop(GTK_SPINNER(THREADS[runningThread->id]->spin));
             }
             else{
+                updateUI();
                 printf("DEBUG: The proces already finnished its calculations\n");
             }
         }
