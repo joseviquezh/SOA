@@ -35,6 +35,7 @@ struct _GuiObjects
     GtkWidget *text_box4;
     GtkWidget *spin4;
     GtkWidget *combo_box0;
+    GtkWidget *combo_box1;
     GtkWidget *entry_number_threads;
     GtkWidget *entry_number_tickets;
     GtkWidget *entry_amount_work;
@@ -48,15 +49,18 @@ G_MODULE_EXPORT void
 button_clicked (GtkButton *button);
 
 G_MODULE_EXPORT void
-entry_activate_number_tickets (GtkEntry *entry);
+entry_activate_number_tickets (GtkEntry *entry, gpointer user_data);
 
 G_MODULE_EXPORT void
-entry_activate_amount_work (GtkEntry *entry);
+entry_activate_amount_work (GtkEntry *entry, gpointer user_data);
 
 G_MODULE_EXPORT void
-entry_activate_quantum (GtkEntry *entry);
+entry_activate_quantum (GtkEntry *entry, gpointer user_data);
 
 G_MODULE_EXPORT void
-activate_combo_box (GtkComboBox *combo_box);
+activate_combo_box0 (GtkComboBox *combo_box);
+
+G_MODULE_EXPORT void
+activate_combo_box1 (GtkComboBox *combo_box);
 
 #endif
