@@ -1,3 +1,6 @@
+#ifndef GUI_H
+#define GUI_H
+
 #include <gtk/gtk.h>
 
 /* Convenience macros for obtaining objects from GUI file */
@@ -5,7 +8,7 @@
     data->name = type( gtk_builder_get_object( builder, #name ) )
 #define CH_GET_WIDGET( builder, name, data ) \
     CH_GET_OBJECT( builder, name, GTK_WIDGET, data )
-#define GW( name ) CH_GET_WIDGET( builder, name, data )
+#define GW( name ) CH_GET_WIDGET( builder, name, gui )
 
 #define GUI_FILE "thread_scheduling.glade"
 
@@ -32,13 +35,32 @@ struct _GuiObjects
     GtkWidget *text_box4;
     GtkWidget *spin4;
     GtkWidget *combo_box0;
+    GtkWidget *combo_box1;
     GtkWidget *entry_number_threads;
+    GtkWidget *entry_number_tickets;
+    GtkWidget *entry_amount_work;
+    GtkWidget *entry_quantum;
 };
 
-/*Callback handler, click execute button*/
 G_MODULE_EXPORT void
-button_clicked (GtkButton *button, GuiObjects  *data);
+create_about_page (GtkButton *button);
 
-/*Callback handler, about selection*/
 G_MODULE_EXPORT void
-create_about_page (GtkButton *button, GuiObjects  *data);
+button_clicked (GtkButton *button);
+
+G_MODULE_EXPORT void
+entry_activate_number_tickets (GtkEntry *entry, gpointer user_data);
+
+G_MODULE_EXPORT void
+entry_activate_amount_work (GtkEntry *entry, gpointer user_data);
+
+G_MODULE_EXPORT void
+entry_activate_quantum (GtkEntry *entry, gpointer user_data);
+
+G_MODULE_EXPORT void
+activate_combo_box0 (GtkComboBox *combo_box);
+
+G_MODULE_EXPORT void
+activate_combo_box1 (GtkComboBox *combo_box);
+
+#endif
