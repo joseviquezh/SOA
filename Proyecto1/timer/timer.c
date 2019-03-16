@@ -17,8 +17,6 @@ void (*callback)(int);
     Configures the timer.
 */
 void setUpTimer (void (*pCallback)(int)) {
-    printf("Initializing timer\n");
-    
     timer.it_interval.tv_sec = 0;
     timer.it_interval.tv_usec = 0;
     timer.it_value.tv_sec = 0;
@@ -30,10 +28,7 @@ void setUpTimer (void (*pCallback)(int)) {
     Sets the timer and fires it.
 */
 void setTimer (int pTime) {
-    printf("Setting timer\n");
-    
-    signal(SIGALRM, callback);
-    
+    signal(SIGALRM, callback);    
     timer.it_value.tv_usec = pTime * timeUnit;
     setitimer(ITIMER_REAL, &timer, 0);
 }

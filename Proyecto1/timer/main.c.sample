@@ -19,7 +19,7 @@ void timerHandler(int pSig)
 {
 	printf("Time is up!!! \n");
   
-  // sigsetjmp(runningThread->buffer, 1
+  // sigsetjmp(runningThread->buffer, 1)
   // siglongjmp(jmpBuffer, 1);
 }
 

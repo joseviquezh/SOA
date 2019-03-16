@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
+#include <signal.h>
+#include <sys/time.h>
+
 #include "piApproximation.c"
+#include "timer/timer.h"
 
 #define NUM_THREADS 5
 void scheduler();
@@ -26,6 +30,16 @@ Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
 
+/* 
+    Callback that is fired when the timer's time is up.
+*/
+void timerHandler(int pSig)
+{
+    printf("Timer Interrupt | Time is up!!! \n");
+    sigsetjmp(runningThread->buffer, 1); 
+    getchar(); // Pause execution.
+    siglongjmp(parent, 1);
+}
 
 void swap (int *a, int *b){
     int temp = *a;
@@ -167,6 +181,10 @@ void scheduler(){
             if(sigsetjmp(parent, 1) == 0) siglongjmp(THREADS[threadId]->buffer, threadId);
         }
         else{
+            if (runningThread->mode == 0) {
+                setUpTimer (timerHandler); 
+                setTimer(QUANTUM_SISE);
+            }
             if(sigsetjmp(parent, 1) == 0) calculatePi();
         }
     }

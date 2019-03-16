@@ -1,3 +1,3 @@
 all: main.c
-	gcc main.c -o main -lm
+	gcc main.c timer/timer.c -o main -lm -lrt
 	./main
