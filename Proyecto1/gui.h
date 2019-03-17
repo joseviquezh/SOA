@@ -40,10 +40,12 @@ struct _GuiObjects
     GtkWidget *entry_number_tickets;
     GtkWidget *entry_amount_work;
     GtkWidget *entry_quantum;
+    GtkWidget *button0;
+    GtkWidget *menu_item_help;
 };
 
 G_MODULE_EXPORT void
-create_about_page (GtkButton *button);
+create_about_page (GtkImageMenuItem *MenuItem);
 
 G_MODULE_EXPORT void
 button_clicked (GtkButton *button);

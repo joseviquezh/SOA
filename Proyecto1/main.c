@@ -32,7 +32,7 @@ struct thread_configuration{
     int current_selection; /* To know which thread is being configured */
 };
 
-int NUM_TICKETS = 0;            /* Total ammount of tickets to be assigned */
+int NUM_TICKETS = 0;            /* Total amount of tickets to be assigned */
 Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
@@ -42,7 +42,7 @@ struct thread_configuration* config;
 void scheduler();
 
 G_MODULE_EXPORT void
-create_about_page (GtkButton *button)
+create_about_page (GtkImageMenuItem *MenuItem)
 {
     GtkWidget *about_window = NULL;
     GtkWidget *text = NULL;
@@ -326,17 +326,23 @@ GuiObjects * init_gui(GuiObjects  *gui){
     GW( text_box4 );
     GW( spin4 );
     GW( combo_box0 );
+    GW( combo_box1 );
     GW( entry_number_threads );
     GW( entry_number_tickets );
     GW( entry_amount_work );
     GW( entry_quantum );
+    GW( button0 );
+    GW( menu_item_help );
 
+    /* Connect signals and callbacks */
     g_signal_connect (gui->entry_number_tickets, "activate", G_CALLBACK (entry_activate_number_tickets), THREADS[NUM_THREADS]);
-    g_signal_connect (gui->entry_number_tickets, "activate", G_CALLBACK (entry_activate_amount_work), config);
-    g_signal_connect (gui->entry_amount_work, "activate", G_CALLBACK (entry_activate_quantum), THREADS[NUM_THREADS]);
-
-    /* Connect signals */
-    gtk_builder_connect_signals( builder, gui->main_window );
+    g_signal_connect (gui->entry_amount_work, "activate", G_CALLBACK (entry_activate_amount_work), config);
+    g_signal_connect (gui->entry_quantum, "activate", G_CALLBACK (entry_activate_quantum), THREADS[NUM_THREADS]);
+    g_signal_connect (gui->combo_box0, "changed", G_CALLBACK (activate_combo_box0), config);
+    g_signal_connect (gui->combo_box1, "changed", G_CALLBACK (activate_combo_box1), config);
+    g_signal_connect (gui->button0, "clicked", G_CALLBACK (button_clicked), config);
+    g_signal_connect (gui->menu_item_help, "activate", G_CALLBACK (create_about_page), config);
+    g_signal_connect (gui->main_window, "destroy", G_CALLBACK (gtk_main_quit), config);
 
     /* Destroy builder, since we don't need it anymore */
     g_object_unref( G_OBJECT( builder ) );
@@ -352,6 +358,7 @@ void alloc_threads () {
 
 int main(int argc, char *argv[]){
 
+    /* Allocate memory for pointers to Thread and thread_configuration structs */
     alloc_threads();
     config = malloc(sizeof(*config));
 
@@ -363,8 +370,6 @@ int main(int argc, char *argv[]){
 
     /*Set the GtkWindow to appear*/
     gtk_widget_show(gui->main_window);
-
-    /* Get the configuration from the GUI */
 
     /* Main Gtk loop */
     gtk_main();
