@@ -22,6 +22,8 @@ typedef struct{
     int* tickets;            // Lottery tickets
 	sigjmp_buf buffer;       // Thread buffer
 	int finnished;
+	
+	/*
 	double divisor;
 	double sign;
 	double piSoFar;
@@ -29,6 +31,10 @@ typedef struct{
 	double num;
 	double den;
 	double prev;
+	*/
+
+	double denom;
+	double numer;
 
 } Thread;
 
@@ -93,6 +99,7 @@ void calculatePi(){
 	    runningThread->piSoFar=4 * runningThread->result;
 		sigsetjmp(runningThread->buffer, 1);
 		*/
+		/*
 		term = runningThread->prev*(runningThread->num/runningThread->den);
 		sigsetjmp(runningThread->buffer, 1);
 		runningThread->prev = term;
@@ -105,6 +112,20 @@ void calculatePi(){
 		sigsetjmp(runningThread->buffer, 1);
 		runningThread->result = runningThread->result + term;
 		sigsetjmp(runningThread->buffer, 1);
+		*/
+
+        runningThread->denom = (2 * piTerm + 1);
+		sigsetjmp(runningThread->buffer, 1);
+        double term = runningThread->numer/runningThread->denom;
+		sigsetjmp(runningThread->buffer, 1);
+        if(piTerm % 2 == 0){
+			runningThread->result += term;
+			sigsetjmp(runningThread->buffer, 1);
+		}
+        else{
+			runningThread->result -= term;
+			sigsetjmp(runningThread->buffer, 1);
+		}
 
 		if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
 			if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
@@ -282,12 +303,12 @@ int main(int argc, char *argv[]){
 
         THREADS[thread]->id = thread;
         THREADS[thread]->mode = mode;
-        THREADS[thread]->result = 0;
         THREADS[thread]->executed = 0;
         THREADS[thread]->workPercentage = workPercentage;
         THREADS[thread]->piTerms = piTerms * 50;
         THREADS[thread]->numTickets = tickets;
         THREADS[thread]->tickets = malloc(tickets * sizeof(int));
+		/*
 		THREADS[thread]->piSoFar=0;
 	    THREADS[thread]->divisor = 1;
 	    THREADS[thread]->sign = 1;
@@ -296,6 +317,10 @@ int main(int argc, char *argv[]){
 		THREADS[thread]->den=2.0;
 		THREADS[thread]->prev=2.0;
 		THREADS[thread]->result=2.0;
+		*/
+		THREADS[thread]->result = 0;
+		THREADS[thread]->numer= 4.0;
+		THREADS[thread]->denom= 0;
 
         NUM_TICKETS += tickets;
 		QUANTUM_SIZE = quantum;
