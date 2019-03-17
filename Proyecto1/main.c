@@ -222,7 +222,7 @@ void calculatePi(){
 
     if(runningThread->mode == 1){
         calculatedTerms = 0;
-        termsToCalculate = (runningThread->workUnits * 100 )/runningThread->workPercentage;
+        termsToCalculate = (runningThread->workUnits * runningThread->workPercentage ) / 100;
     }
 
     /*
