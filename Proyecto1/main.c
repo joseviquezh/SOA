@@ -2,24 +2,35 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
+#include <signal.h>
 #include <stdbool.h>
+#include <sys/time.h>
+
 #include "piApproximation.c"
 #include "gui.h"
+#include "timer/timer.h"
 
 #define NUM_THREADS 5
 #define MINIMUN_WORK_UNIT 50
 
+void scheduler();
+
 typedef struct{
     int id;
     int mode;               /* 0 expropiatory, 1 Non expropiatory */
-    int result;             /* pi calculation result/progress */
+    double result;          /* pi calculation result/progress */
     int executed;           /* To know if the thread has been executed yet */
-    int workUnits;          /* Amount of work units */
-    int workPercentage;     /* Between 0-100% */
-    int numTickets;         /* Number of assigned tickets */
+    int workUnits;          /* Amount of work units:
+                             * PI terms to calculate depending on the
+                             * selected working units. 1 woking unit == 50 piTerms */
+    double workPercentage;  /* Between 0-100% */
+    int numTickets;         /* Individual number of assigned tickets */
     int* tickets;           /* Lottery tickets */
     int quantum;            /* Lottery tickets*/
     sigjmp_buf buffer;      /* Thread buffer */
+    int finnished;
+    double denom;
+    double numer;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
@@ -29,17 +40,18 @@ struct thread_configuration{
     int number_tickets;
     int amount_work;
     int quantum;
-    int current_selection; /* To know which thread is being configured */
+    int current_selection;  /* To know which thread is being configured */
 };
 
+int QUANTUM_SIZE = 0;           /* Defined in miliseconds */
 int NUM_TICKETS = 0;            /* Total amount of tickets to be assigned */
 Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
+int last_thread = 0;
+sigjmp_buf last_buffer;
 GuiObjects  *gui=NULL;
 struct thread_configuration* config;
-
-void scheduler();
 
 G_MODULE_EXPORT void
 create_about_page (GtkImageMenuItem *MenuItem)
@@ -72,7 +84,7 @@ create_about_page (GtkImageMenuItem *MenuItem)
 G_MODULE_EXPORT void
 button_clicked (GtkButton *button)
 {
-    g_print( "Thread scheduling started\n" );
+    g_print("Thread scheduling started\n");
     g_print("Number of tickets: %d\n", config->number_tickets);
     g_print("Amount of work: %d\n", config->amount_work);
     g_print("Quantum: %d\n", config->quantum);
@@ -80,23 +92,26 @@ button_clicked (GtkButton *button)
 
     /* Initialize all the threads */
     for(int thread = 0; thread < NUM_THREADS; ++thread){
-        THREADS[thread] = (Thread*) malloc(sizeof(Thread));
         THREADS[thread]->id = thread;
         THREADS[thread]->mode = config->mode;
         THREADS[thread]->result = 0;
         THREADS[thread]->executed = 0;
-        THREADS[thread]->workPercentage = 0;
         THREADS[thread]->workUnits = config->amount_work*MINIMUN_WORK_UNIT;
-        //~ THREADS[thread]->numTickets = config->number_tickets;
+        THREADS[thread]->workPercentage = 0;
         THREADS[thread]->tickets = malloc(config->number_tickets * sizeof(int));
-        //~ THREADS[thread]->quantum = config->quantum;
+        THREADS[thread]->numer= 4.0;
+        THREADS[thread]->denom= 0;
+        /* Add the tickets of each individual thread */
+        NUM_TICKETS += THREADS[thread]->numTickets;
     }
+    g_print("NUM_TICKETS: %d\n", NUM_TICKETS);
+    QUANTUM_SIZE = config->quantum;
 
     /*Disable execute button after execution taking effect*/
     gtk_widget_set_sensitive (GTK_WIDGET(button), FALSE);
 
     /* Call the scheduler to start the program */
-    //~ scheduler();
+    scheduler();
 
     /* Free allocated memory */
     for(int thread = 0; thread < NUM_THREADS; ++thread){
@@ -145,6 +160,13 @@ activate_combo_box1 (GtkComboBox *combo_box)
     g_print( "Current selected thread: %d\n",  config->current_selection);
 }
 
+/* Callback that is fired when the timer's time is up */
+void timerHandler(int pSig)
+{
+    printf("DEBUG: Time is up!!! \n");
+    siglongjmp(parent, 1);
+}
+
 void swap (int *a, int *b){
     int temp = *a;
     *a = *b;
@@ -152,51 +174,95 @@ void swap (int *a, int *b){
 }
 
 void calculatePi(){
-    double progress=0.0;// percent
-    long long int i,fractionValue,fractionValueAdjusted,totalWork;
-    LookUp* ptrPiAproximationExpro=getInitState();
-    LookUp* ptrPiAproximationNOExpro=getInitState();
-    
+	runningThread->executed = 1;
+	sigsetjmp(runningThread->buffer, 1);
 
-    runningThread->executed = 1;
+    double progress; // percent
+	sigsetjmp(runningThread->buffer, 1);
+
+	long long int calculatedTerms,termsToCalculate;
+	sigsetjmp(runningThread->buffer, 1);
+
+	double term = 0.0;
+	sigsetjmp(runningThread->buffer, 1);
+
+	if(runningThread->mode == 1){
+		calculatedTerms = 0;
+		termsToCalculate = (runningThread->workUnits * 100 )/runningThread->workPercentage;
+	}
+
+	/*
+		Expropiative: do work during a certaing amount of time
+		Non-expropiative: do a specific work percentage
+	*/
+
+	for(int piTerm = 0; piTerm < runningThread->workUnits; ++piTerm){
+		//pi_gregory_pauseable_2(runningThread->ptrPiAproximation);
+		/*
+		runningThread->result += runningThread->sign / runningThread->divisor;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->divisor += 2;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->sign *= -1;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->piSoFar=4 * runningThread->result;
+		sigsetjmp(runningThread->buffer, 1);
+		*/
+		/*
+		term = runningThread->prev*(runningThread->num/runningThread->den);
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->prev = term;
+		sigsetjmp(runningThread->buffer, 1);
+		term = runningThread->prev*(1/(runningThread->den+1));
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->num = runningThread->num + 2.0;
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->den = runningThread->den + 2.0;
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->result = runningThread->result + term;
+		sigsetjmp(runningThread->buffer, 1);
+		*/
+
+        runningThread->denom = (2 * piTerm + 1);
+		sigsetjmp(runningThread->buffer, 1);
+        double term = runningThread->numer/runningThread->denom;
+		sigsetjmp(runningThread->buffer, 1);
+        if(piTerm % 2 == 0){
+			runningThread->result += term;
+			sigsetjmp(runningThread->buffer, 1);
+		}
+        else{
+			runningThread->result -= term;
+			sigsetjmp(runningThread->buffer, 1);
+		}
+
+		if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
+			if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
+			calculatedTerms = 0;
+		}
+	}
+
+	/*
+	double progress=0.0;// percent
+
+	long long int fractionValue,fractionValueAdjusted,totalWork,i;
+	LookUp* ptrPiAproximationExpro = getInitState();
+	LookUp* ptrPiAproximationNonExpro = getInitState();
+
     if(runningThread->mode == 0){
-        /*
-            Expropiative: do work during a certaing amount of time
-
-            sigsetjmp -> Saves a checkpoint (stored in runningThread->buffer)
-            siglongjmp -> Moves to a checkpoint (stored in parent)
-        */
-        /*
-            // Since the time could end at any point, need to continously save the progress
-            while(time){
-                // Do calculations
-                runningThread->result = result;
-                sigsetjmp(runningThread->buffer, 1);
-
-                // Do calculations
-                runningThread->result = result;
-                sigsetjmp(runningThread->buffer, 1);
-
-                // Do calculations
-                */
-            if(runningThread->workUnits>0){
-                pi_gregory_pauseable(runningThread->workUnits*MIN_OF_WORK,ptrPiAproximationExpro);
-                //The value of pi is saved in ptrPiAproximationExpro->piSoFar
-                progress=ptrPiAproximationExpro->iterations*100/(runningThread->workUnits*MIN_OF_WORK);
-            }else{
-                printf("\nIncorrect parameters for: workunits: %d\n",runningThread->workUnits);
-            }
-               /*
-            }
-            runningThread->result = result;     // Save result in the object
-            siglongjmp(parent, 1);      // Move back to the scheduler
-        */
+        if(runningThread->piTerms>0){
+			pi_gregory_pauseable(runningThread->piTerms*MIN_OF_WORK,ptrPiAproximationExpro);
+			//The value of pi is saved in ptrPiAproximationExpro->piSoFar
+			progress=ptrPiAproximationExpro->iterations*100/(runningThread->piTerms*MIN_OF_WORK);
+			sigsetjmp(runningThread->buffer, 0);
+			printf("Result so far %d\n", runningThread->result);
+		}
+        }else{
+            printf("\nIncorrect parameters for: piTerms: %d\n",runningThread->piTerms);
+        }
     }
     else{
-        /*
-            Non-expropiative: do a specific work percentage
-        */
-        if(validateParaetersNoExpropiatives(runningThread->workUnits,runningThread->workPercentage)){
+        if(validateParaetersNoExpropiatives(runningThread->piTerms,runningThread->workPercentage)){
             fractionValue=totalWork*runningThread->workPercentage/100;
             fractionValueAdjusted=fractionValue;
             i=(long long int)totalWork/fractionValue;
@@ -207,31 +273,22 @@ void calculatePi(){
                 //VALUE OF PI UNTIL NOW                ->     ptrPiAproximationNOExpro->piSoFar
                 if(fractionValueAdjusted>totalWork-ptrPiAproximationNOExpro->iterations)
                 fractionValueAdjusted=totalWork-ptrPiAproximationNOExpro->iterations;
-                printf("This line has be replaced with the command required to release the thread.\n");
+                if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
             }
             // TO CONSULT FINAL VULE OF PI             ->     ptrPiAproximationNOExpro->piSoFar
             // TO CONSULT THE TOTAL ITERATIONS DONE    ->     ptrPiAproximationNOExpro->iterations
         }else{
-            printf("\nIncorrect parameters for: percentage: %d or workunits: %d\n",runningThread->workPercentage,runningThread->workUnits);
+            printf("\nIncorrect parameters for: percentage: %f or piTerms: %d\n",runningThread->workPercentage,runningThread->piTerms);
         }
-        //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
-        /*
-            sigsetjmp(runningThread->buffer, 1);    // Save chackpoint so we can return later
-            while(runningThread->workPercentage > completedWorkPercentage){
-                // Do calculations
-            }
-            runningThread->result = result;     // Save result in the object
-            siglongjmp(parent, 1);      // Move back to the scheduler
-        */
     }
-
-    for(int i = 0; i < 10; ++i){
-        if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
-    }
+	*/
+	printf("DEBUG: Process %d ended its execution\n", runningThread->id);
+	sigsetjmp(runningThread->buffer, 1);
+	runningThread->finnished = 1;
+	sigsetjmp(runningThread->buffer, 1);
 }
 
 void scheduler(){
-    printf("Entered scheduler\n");
     // Create an array with all the ticket numbers
     int tickets[NUM_TICKETS];
     for(int i = 0; i < NUM_TICKETS; ++i){
@@ -265,7 +322,7 @@ void scheduler(){
 
     // Randomly select a winning ticket until there are no tickets
     for(int i = 0; i < NUM_TICKETS; ++i){
-        printf("Selecting a wining ticket\n");
+        printf("\nDEBUG: Selecting a wining ticket\n");
         int ticket = tickets[i];
         int threadId;
         int winnerFound = 0;
@@ -278,14 +335,36 @@ void scheduler(){
             }
             if(winnerFound) break;
         }
-        printf("The winning ticket is %d and the winner is %d\n", ticket, threadId);
-        runningThread = THREADS[threadId];
-        if(runningThread->executed){
-            if(sigsetjmp(parent, 1) == 0) siglongjmp(THREADS[threadId]->buffer, threadId);
+        if(threadId < NUM_THREADS){
+            printf("DEBUG: The winning ticket is %d and the winner is %d\n", ticket, threadId);
+            runningThread = THREADS[threadId];
+            if(runningThread->finnished == 0){
+                if(sigsetjmp(parent, 1) == 0){
+                    if(runningThread->mode == 0){
+                        setUpTimer(timerHandler);
+                        setTimer(QUANTUM_SIZE);
+                    }
+                    if(runningThread->executed){
+                        printf("DEBUG: The proces was already executed\n");
+                        siglongjmp(runningThread->buffer, threadId);
+                    }
+                    else{
+                        printf("DEBUG: The proces wasn't already executed\n");
+                        calculatePi();
+                    }
+                }
+            }
+            else{
+                printf("DEBUG: The proces already finnished its calculations\n");
+            }
         }
         else{
-            if(sigsetjmp(parent, 1) == 0) calculatePi();
+            --i;
         }
+    }
+    printf("\nAll the tickets were chosen, here are the results:\n");
+    for(int threadId = 0; threadId < NUM_THREADS; ++threadId){
+        printf("    %d: %lf\n",threadId, THREADS[threadId]->result);
     }
 }
 
