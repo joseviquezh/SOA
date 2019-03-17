@@ -26,7 +26,6 @@ typedef struct{
     double workPercentage;  /* Between 0-100% */
     int numTickets;         /* Individual number of assigned tickets */
     int* tickets;           /* Lottery tickets */
-    int quantum;            /* Lottery tickets*/
     sigjmp_buf buffer;      /* Thread buffer */
     int finnished;
     double denom;
@@ -46,6 +45,7 @@ struct thread_configuration{
     int number_tickets;
     int amount_work;
     int quantum;
+    double work_percent;
     int current_selection;  /* To know which thread is being configured */
 };
 
@@ -94,6 +94,7 @@ button_clicked (GtkButton *button)
     g_print("Number of tickets: %d\n", config->number_tickets);
     g_print("Amount of work: %d\n", config->amount_work);
     g_print("Quantum: %d\n", config->quantum);
+    g_print("Work Percent: %f\n", config->work_percent);
     g_print("Mode: %d\n", config->mode);
 
     /* Initialize all the threads */
@@ -103,12 +104,12 @@ button_clicked (GtkButton *button)
         THREADS[thread]->result = 0;
         THREADS[thread]->executed = 0;
         THREADS[thread]->workUnits = config->amount_work*MINIMUN_WORK_UNIT;
-        THREADS[thread]->workPercentage = 10;
+        THREADS[thread]->workPercentage = config->work_percent;
         THREADS[thread]->tickets = malloc(config->number_tickets * sizeof(int));
         THREADS[thread]->numer= 4.0;
         THREADS[thread]->denom= 0;
         THREADS[thread]->iterations= 0;
-        
+
         /* Add the tickets of each individual thread */
         NUM_TICKETS += THREADS[thread]->numTickets;
     }
@@ -147,10 +148,17 @@ G_MODULE_EXPORT void
 entry_activate_quantum (GtkEntry *entry, gpointer user_data)
 {
     struct Thread *d = user_data;
-    config->quantum = atoi(gtk_entry_get_text (entry));
+    if(config->mode == 1){
+        config->work_percent = atoi(gtk_entry_get_text (entry));
+        THREADS[config->current_selection]->workPercentage = config->work_percent;
+    }
+    else {
+        config->quantum = atoi(gtk_entry_get_text (entry));
+        QUANTUM_SIZE = config->quantum;
+    }
     g_print( "Current selected thread: %d\n",  config->current_selection);
+    g_print("config->work_percent: %f\n", config->work_percent);
     g_print("config->quantum: %d\n", config->quantum);
-    THREADS[config->current_selection]->quantum = config->quantum;
 }
 
 G_MODULE_EXPORT void
@@ -276,8 +284,6 @@ void scheduler(){
             THREADS[threadId]->tickets[i] = tickets[startIndex++];
         }
     }
-
-            
 
     // Shuffle the tickts array
     for (int i = NUM_TICKETS-1; i > 0; i--){
