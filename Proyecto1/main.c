@@ -22,6 +22,14 @@ typedef struct{
     int* tickets;            // Lottery tickets
 	sigjmp_buf buffer;       // Thread buffer
 	int finnished;
+	double divisor;
+	double sign;
+	double piSoFar;
+
+	double num;
+	double den;
+	double prev;
+
 } Thread;
 
 
@@ -31,6 +39,8 @@ Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
 
+int last_thread = 0;
+sigjmp_buf last_buffer;
 /*
     Callback that is fired when the timer's time is up.
 */
@@ -52,21 +62,16 @@ void calculatePi(){
 	runningThread->executed = 1;
 	sigsetjmp(runningThread->buffer, 1);
 
-	LookUp* ptrPiAproximation = getInitState();
-	sigsetjmp(runningThread->buffer, 1);
-
     double progress; // percent
 	sigsetjmp(runningThread->buffer, 1);
 
 	long long int calculatedTerms,termsToCalculate;
 	sigsetjmp(runningThread->buffer, 1);
 
-	if(runningThread->mode == 0){
-		progress=0.0;
-		sigsetjmp(runningThread->buffer, 1);
+	double term = 0.0;
+	sigsetjmp(runningThread->buffer, 1);
 
-	}
-	else{
+	if(runningThread->mode == 1){
 		calculatedTerms = 0;
 		termsToCalculate = (runningThread->piTerms * 100 )/runningThread->workPercentage;
 	}
@@ -77,7 +82,28 @@ void calculatePi(){
 	*/
 
 	for(int piTerm = 0; piTerm < runningThread->piTerms; ++piTerm){
-		pi_gregory_pauseable_2(ptrPiAproximation);
+		//pi_gregory_pauseable_2(runningThread->ptrPiAproximation);
+		/*
+		runningThread->result += runningThread->sign / runningThread->divisor;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->divisor += 2;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->sign *= -1;
+		sigsetjmp(runningThread->buffer, 1);
+	    runningThread->piSoFar=4 * runningThread->result;
+		sigsetjmp(runningThread->buffer, 1);
+		*/
+		term = runningThread->prev*(runningThread->num/runningThread->den);
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->prev = term;
+		sigsetjmp(runningThread->buffer, 1);
+		term = runningThread->prev*(1/(runningThread->den+1));
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->num = runningThread->num + 2.0;
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->den = runningThread->den + 2.0;
+		sigsetjmp(runningThread->buffer, 1);
+		runningThread->result = runningThread->result + term;
 		sigsetjmp(runningThread->buffer, 1);
 
 		if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
@@ -129,8 +155,6 @@ void calculatePi(){
 	printf("DEBUG: Process %d ended its execution\n", runningThread->id);
 	sigsetjmp(runningThread->buffer, 1);
 	runningThread->finnished = 1;
-	sigsetjmp(runningThread->buffer, 1);
-	runningThread->result = ptrPiAproximation->piSoFar;
 	sigsetjmp(runningThread->buffer, 1);
 }
 
@@ -193,7 +217,7 @@ void scheduler(){
 					}
 					if(runningThread->executed){
 						printf("DEBUG: The proces was already executed\n");
-			            siglongjmp(runningThread->buffer, threadId);
+						siglongjmp(runningThread->buffer, threadId);
 			        }
 			        else{
 						printf("DEBUG: The proces wasn't already executed\n");
@@ -261,9 +285,18 @@ int main(int argc, char *argv[]){
         THREADS[thread]->result = 0;
         THREADS[thread]->executed = 0;
         THREADS[thread]->workPercentage = workPercentage;
-        THREADS[thread]->piTerms = piTerms*50;
+        THREADS[thread]->piTerms = piTerms * 50;
         THREADS[thread]->numTickets = tickets;
         THREADS[thread]->tickets = malloc(tickets * sizeof(int));
+		THREADS[thread]->piSoFar=0;
+	    THREADS[thread]->divisor = 1;
+	    THREADS[thread]->sign = 1;
+
+		THREADS[thread]->num=1.0;
+		THREADS[thread]->den=2.0;
+		THREADS[thread]->prev=2.0;
+		THREADS[thread]->result=2.0;
+
         NUM_TICKETS += tickets;
 		QUANTUM_SIZE = quantum;
     }
