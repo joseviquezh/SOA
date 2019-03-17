@@ -20,7 +20,7 @@ typedef struct{
     int mode;               /* 0 expropiatory, 1 Non expropiatory */
     double result;          /* pi calculation result/progress */
     int executed;           /* To know if the thread has been executed yet */
-    int workUnits;          /* Amount of work units:
+    float workUnits;          /* Amount of work units:
                              * PI terms to calculate depending on the
                              * selected working units. 1 woking unit == 50 piTerms */
     double workPercentage;  /* Between 0-100% */
@@ -36,7 +36,7 @@ typedef struct{
     GtkWidget *text_box;
     GtkWidget *spin;
     //--------
-    int iterations;
+    float iterations;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
@@ -157,6 +157,12 @@ G_MODULE_EXPORT void
 activate_combo_box0 (GtkComboBox *combo_box)
 {
     config->mode = gtk_combo_box_get_active (GTK_COMBO_BOX(combo_box));
+    if(config->mode == 1){
+        gtk_label_set_text (GTK_LABEL(gui->quantum_label),"Work Percentage");
+    }
+    else {
+        gtk_label_set_text (GTK_LABEL(gui->quantum_label),"Quantum");
+    }
     g_print( "Current selected thread: %d\n",  config->mode);
 }
 
@@ -180,21 +186,24 @@ void swap (int *a, int *b){
     *b = temp;
 }
 
-
 void updateUI(){
-    double progress=runningThread->iterations/runningThread->workUnits;
+    float progress=runningThread->iterations/runningThread->workUnits;
     gchar* message = g_strdup_printf ("PID: %d/ %f", runningThread->id, progress);
     gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
     gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress);
     gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result));
+    while (gtk_events_pending()){
+        gtk_main_iteration();
+    }
 }
+
 void calculatePi(){
     gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
 
     runningThread->executed = 1;
     sigsetjmp(runningThread->buffer, 1);
 
-    double progress; // percent
+    float progress; // percent
     sigsetjmp(runningThread->buffer, 1);
 
     long long int calculatedTerms,termsToCalculate;
@@ -214,7 +223,6 @@ void calculatePi(){
     */
 
     for(int piTerm = 0; piTerm < runningThread->workUnits; ++piTerm){
-        runningThread->iterations++;
         runningThread->denom = (2 * piTerm + 1);
         sigsetjmp(runningThread->buffer, 1);
         double term = runningThread->numer/runningThread->denom;
@@ -231,14 +239,10 @@ void calculatePi(){
         if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
             if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
             calculatedTerms = 0;
+        }
 
-        }
-        while (gtk_events_pending()){
-            gtk_main_iteration();
-        }
-    }
-    while (gtk_events_pending()){
-        gtk_main_iteration();
+        runningThread->iterations++;
+        updateUI();
     }
 
     printf("DEBUG: Process %d ended its execution\n", runningThread->id);
@@ -303,7 +307,6 @@ void scheduler(){
             printf("DEBUG: The winning ticket is %d and the winner is %d\n", ticket, threadId);
             runningThread = THREADS[threadId];
             if(runningThread->finnished == 0){
-                updateUI();
                 if(sigsetjmp(parent, 1) == 0){
                     if(runningThread->mode == 0){
                         setUpTimer(timerHandler);
@@ -365,6 +368,7 @@ GuiObjects * init_gui(){
     GW( entry_quantum );
     GW( button0 );
     GW( menu_item_help );
+    GW( quantum_label );
 
     CH_GET_OBJECT_THREAD(builder, bar0, GTK_WIDGET, THREADS, 0, bar);
     CH_GET_OBJECT_THREAD(builder, bar1, GTK_WIDGET, THREADS, 1, bar);

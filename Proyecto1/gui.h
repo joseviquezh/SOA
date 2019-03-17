@@ -45,6 +45,7 @@ struct _GuiObjects
     GtkWidget *entry_quantum;
     GtkWidget *button0;
     GtkWidget *menu_item_help;
+    GtkWidget *quantum_label;
 };
 
 G_MODULE_EXPORT void
