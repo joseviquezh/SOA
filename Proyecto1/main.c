@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
-#include "piApproximation.c"
 #include "gui.h"
 #include "timer/timer.h"
 
