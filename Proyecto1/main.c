@@ -205,7 +205,7 @@ void swap (int *a, int *b){
 
 void updateUI(){
     float progress=runningThread->iterations/runningThread->workUnits;
-    gchar* message = g_strdup_printf ("PID: %d/ %f", runningThread->id, progress);
+    gchar* message = g_strdup_printf ("PID: %d/ %.0f%%", runningThread->id+1, progress*100);
     gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
     gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress);
     gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result*4));
