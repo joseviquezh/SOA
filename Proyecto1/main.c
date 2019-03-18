@@ -31,7 +31,7 @@ typedef struct{
     double denom;
     double numer;
     //----------------------
-    
+
     double divisor;
     double sign;
 
@@ -45,7 +45,7 @@ typedef struct{
 } Thread;
 
 /* Configuration data retrieved from the GUI */
-struct thread_configuration{
+typedef struct{
     int mode; /* 0 expropiatory, 1 Non expropiatory */
     int threads_number;
     int number_tickets;
@@ -53,17 +53,15 @@ struct thread_configuration{
     int quantum;
     double work_percent;
     int current_selection;  /* To know which thread is being configured */
-};
+} thread_configuration;
 
 int QUANTUM_SIZE = 0;           /* Defined in miliseconds */
 int NUM_TICKETS = 0;            /* Total amount of tickets to be assigned */
 Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
-int last_thread = 0;
-sigjmp_buf last_buffer;
 GuiObjects *gui=NULL;
-struct thread_configuration* config;
+thread_configuration* config;
 
 G_MODULE_EXPORT void
 create_about_page (GtkImageMenuItem *MenuItem)
@@ -98,9 +96,9 @@ button_clicked (GtkButton *button)
 {
     g_print("Thread scheduling started\n");
     g_print("Number of tickets: %d\n", config->number_tickets);
-    g_print("Amount of work: %d\n", config->amount_work);
+    g_print("Work units: %d\n", config->amount_work);
     g_print("Quantum: %d\n", config->quantum);
-    g_print("Work Percent: %f\n", config->work_percent);
+    g_print("Work Percentage: %f\n", config->work_percent);
     g_print("Mode: %d\n", config->mode);
 
     /* Initialize all the threads */
@@ -150,7 +148,7 @@ entry_activate_amount_work (GtkEntry *entry, gpointer user_data)
 {
     config->amount_work = atoi(gtk_entry_get_text (entry));
     g_print( "Current selected thread: %d\n",  config->current_selection);
-    g_print("Amount of work: %d\n", config->amount_work);
+    g_print("Work units: %d\n", config->amount_work);
 }
 
 G_MODULE_EXPORT void
@@ -190,6 +188,7 @@ activate_combo_box1 (GtkComboBox *combo_box)
     g_print( "Current selected thread: %d\n",  config->current_selection);
 }
 
+
 /* Callback that is fired when the timer's time is up */
 void timerHandler(int pSig)
 {
@@ -203,6 +202,7 @@ void swap (int *a, int *b){
     *b = temp;
 }
 
+
 void updateUI(){
     float progress=runningThread->iterations/runningThread->workUnits;
     gchar* message = g_strdup_printf ("PID: %d/ %.0f%%", runningThread->id+1, progress*100);
@@ -214,8 +214,9 @@ void updateUI(){
     }
 }
 
+
 void calculatePi(){
-    gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
+    //gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
 
     runningThread->executed = 1;
     sigsetjmp(runningThread->buffer, 1);
@@ -259,26 +260,28 @@ void calculatePi(){
         //}
 
         runningThread->result += runningThread->sign / runningThread->divisor;
-          //  sigsetjmp(runningThread->buffer, 1);
-        runningThread->divisor += 2;
-            //sigsetjmp(runningThread->buffer, 1);
-        runningThread->sign = -1*runningThread->sign;
-            //sigsetjmp(runningThread->buffer, 1);
-        runningThread->iterations++;
-        if(runningThread->mode == 1 && ((int)runningThread->iterations%(int)runningThread->oneStepIterations==0)){
-            calculatedTerms = termsToCalculate;
-            if(sigsetjmp(runningThread->buffer, 1) == 0) 
-            siglongjmp(parent, 1);
-           // else printf("FUCK!!!!");
-        }//else printf("FUCK!!!! + %lld",calculatedTerms);
         sigsetjmp(runningThread->buffer, 1);
-        updateUI();
+        runningThread->divisor += 2;
+        sigsetjmp(runningThread->buffer, 1);
+        runningThread->sign = -1*runningThread->sign;
+        sigsetjmp(runningThread->buffer, 1);
+        runningThread->iterations++;
+        sigsetjmp(runningThread->buffer, 1);
+
+        if(runningThread->mode == 1){
+            updateUI();
+            if((int)runningThread->iterations%(int)runningThread->oneStepIterations==0){
+                calculatedTerms = termsToCalculate;
+                if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
+            }
+        }
+
+
     }
 
     printf("DEBUG: Process %d ended its execution\n", runningThread->id);
-    sigsetjmp(runningThread->buffer, 1);
     runningThread->finnished = 1;
-    sigsetjmp(runningThread->buffer, 1);
+    siglongjmp(parent, 1);
 }
 
 void scheduler(){
@@ -319,6 +322,7 @@ void scheduler(){
         while (gtk_events_pending()){
             gtk_main_iteration();
         }
+
         int ticket = tickets[i];
         int threadId;
         int winnerFound = 0;
@@ -335,6 +339,7 @@ void scheduler(){
             printf("DEBUG: The winning ticket is %d and the winner is %d\n", ticket, threadId);
             runningThread = THREADS[threadId];
             if(runningThread->finnished == 0){
+                gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
                 if(sigsetjmp(parent, 1) == 0){
                     if(runningThread->mode == 0){
                         setUpTimer(timerHandler);
@@ -349,14 +354,18 @@ void scheduler(){
                         calculatePi();
                     }
                 }
+                if(runningThread->mode == 0){
+                    updateUI();
+                }
                 gtk_spinner_stop(GTK_SPINNER(THREADS[runningThread->id]->spin));
             }
             else{
-                updateUI();
+                //updateUI();
                 printf("DEBUG: The proces already finnished its calculations\n");
             }
         }
         else{
+            printf("threadId > NUM_THREADS!\n");
             --i;
         }
     }
@@ -440,7 +449,7 @@ int main(int argc, char *argv[]){
 
     /* Allocate memory for pointers to Thread and thread_configuration structs */
     alloc_threads();
-    config = malloc(sizeof(*config));
+    config = (thread_configuration*)malloc(sizeof(config));
 
     /* Init GTK+ */
     gtk_init( &argc, &argv );
