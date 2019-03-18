@@ -30,12 +30,18 @@ typedef struct{
     int finnished;
     double denom;
     double numer;
+    //----------------------
+    
+    double divisor;
+    double sign;
+
     /* Widgets associated to the thread */
     GtkWidget *bar;
     GtkWidget *text_box;
     GtkWidget *spin;
     //--------
     float iterations;
+    float oneStepIterations;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
@@ -109,6 +115,9 @@ button_clicked (GtkButton *button)
         THREADS[thread]->numer= 4.0;
         THREADS[thread]->denom= 0;
         THREADS[thread]->iterations= 0;
+        THREADS[thread]->divisor= 1;
+        THREADS[thread]->sign= 1;
+        THREADS[thread]->oneStepIterations=0;
 
         /* Add the tickets of each individual thread */
         NUM_TICKETS += THREADS[thread]->numTickets;
@@ -199,7 +208,7 @@ void updateUI(){
     gchar* message = g_strdup_printf ("PID: %d/ %f", runningThread->id, progress);
     gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
     gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress);
-    gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result));
+    gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result*4));
     while (gtk_events_pending()){
         gtk_main_iteration();
     }
@@ -223,33 +232,46 @@ void calculatePi(){
     if(runningThread->mode == 1){
         calculatedTerms = 0;
         termsToCalculate = (runningThread->workUnits * runningThread->workPercentage ) / 100;
+        calculatedTerms=termsToCalculate;
+        runningThread->oneStepIterations=termsToCalculate;
+
     }
 
     /*
         Expropiative: do work during a certaing amount of time
         Non-expropiative: do a specific work percentage
     */
+        //ptrProgress->result += ptrProgress->sign / ptrProgress->divisor;
+        //ptrProgress->divisor += 2;
+        //ptrProgress->sign = -1*ptrProgress->sign;
+    for(int piTerm = 0; piTerm < runningThread->workUnits&&runningThread->iterations<runningThread->workUnits; ++piTerm){
+        //runningThread->denom = (2 * piTerm + 1);
+        //sigsetjmp(runningThread->buffer, 1);
+        //double term = runningThread->numer/runningThread->denom;
+        //sigsetjmp(runningThread->buffer, 1);
+        //if(piTerm % 2 == 0){
+        //    runningThread->result += term;
+        //    sigsetjmp(runningThread->buffer, 1);
+        //}
+        //else{
+        //   runningThread->result -= term;
+        //    sigsetjmp(runningThread->buffer, 1);
+        //}
 
-    for(int piTerm = 0; piTerm < runningThread->workUnits; ++piTerm){
-        runningThread->denom = (2 * piTerm + 1);
-        sigsetjmp(runningThread->buffer, 1);
-        double term = runningThread->numer/runningThread->denom;
-        sigsetjmp(runningThread->buffer, 1);
-        if(piTerm % 2 == 0){
-            runningThread->result += term;
-            sigsetjmp(runningThread->buffer, 1);
-        }
-        else{
-            runningThread->result -= term;
-            sigsetjmp(runningThread->buffer, 1);
-        }
-
-        if(runningThread->mode == 1 && calculatedTerms++ == termsToCalculate){
-            if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
-            calculatedTerms = 0;
-        }
-
+        runningThread->result += runningThread->sign / runningThread->divisor;
+          //  sigsetjmp(runningThread->buffer, 1);
+        runningThread->divisor += 2;
+            //sigsetjmp(runningThread->buffer, 1);
+        runningThread->sign = -1*runningThread->sign;
+            //sigsetjmp(runningThread->buffer, 1);
         runningThread->iterations++;
+        if(runningThread->mode == 1 && ((int)runningThread->iterations%(int)runningThread->oneStepIterations==0)){
+            calculatedTerms = termsToCalculate;
+            if(sigsetjmp(runningThread->buffer, 1) == 0) 
+            siglongjmp(parent, 1);
+           // else printf("FUCK!!!!");
+        }//else printf("FUCK!!!! + %lld",calculatedTerms);
+        sigsetjmp(runningThread->buffer, 1);
         updateUI();
     }
 
