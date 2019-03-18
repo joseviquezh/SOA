@@ -30,22 +30,18 @@ typedef struct{
     int finnished;
     double denom;
     double numer;
-    //----------------------
-
     double divisor;
     double sign;
-
     /* Widgets associated to the thread */
     GtkWidget *bar;
     GtkWidget *text_box;
     GtkWidget *spin;
-    //--------
     float iterations;
     float oneStepIterations;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
-typedef struct{
+struct thread_configuration{
     int mode; /* 0 expropiatory, 1 Non expropiatory */
     int threads_number;
     int number_tickets;
@@ -53,7 +49,7 @@ typedef struct{
     int quantum;
     double work_percent;
     int current_selection;  /* To know which thread is being configured */
-} thread_configuration;
+};
 
 int QUANTUM_SIZE = 0;           /* Defined in miliseconds */
 int NUM_TICKETS = 0;            /* Total amount of tickets to be assigned */
@@ -61,7 +57,7 @@ Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
 GuiObjects *gui=NULL;
-thread_configuration* config;
+struct thread_configuration* config;
 
 G_MODULE_EXPORT void
 create_about_page (GtkImageMenuItem *MenuItem)
@@ -122,7 +118,7 @@ button_clicked (GtkButton *button)
     }
     QUANTUM_SIZE = config->quantum;
 
-    /*Disable execute button after execution taking effect*/
+    /* Disable execute button after execution taking effect */
     gtk_widget_set_sensitive (GTK_WIDGET(button), FALSE);
 
     /* Call the scheduler to start the program */
@@ -216,12 +212,10 @@ void updateUI(){
 
 
 void calculatePi(){
-    //gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
-
     runningThread->executed = 1;
     sigsetjmp(runningThread->buffer, 1);
 
-    float progress; // percent
+    float progress; /* percent */
     sigsetjmp(runningThread->buffer, 1);
 
     long long int calculatedTerms,termsToCalculate;
@@ -242,22 +236,8 @@ void calculatePi(){
         Expropiative: do work during a certaing amount of time
         Non-expropiative: do a specific work percentage
     */
-        //ptrProgress->result += ptrProgress->sign / ptrProgress->divisor;
-        //ptrProgress->divisor += 2;
-        //ptrProgress->sign = -1*ptrProgress->sign;
+
     for(int piTerm = 0; piTerm < runningThread->workUnits&&runningThread->iterations<runningThread->workUnits; ++piTerm){
-        //runningThread->denom = (2 * piTerm + 1);
-        //sigsetjmp(runningThread->buffer, 1);
-        //double term = runningThread->numer/runningThread->denom;
-        //sigsetjmp(runningThread->buffer, 1);
-        //if(piTerm % 2 == 0){
-        //    runningThread->result += term;
-        //    sigsetjmp(runningThread->buffer, 1);
-        //}
-        //else{
-        //   runningThread->result -= term;
-        //    sigsetjmp(runningThread->buffer, 1);
-        //}
 
         runningThread->result += runningThread->sign / runningThread->divisor;
         sigsetjmp(runningThread->buffer, 1);
@@ -275,8 +255,6 @@ void calculatePi(){
                 if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
             }
         }
-
-
     }
 
     printf("DEBUG: Process %d ended its execution\n", runningThread->id);
@@ -285,22 +263,22 @@ void calculatePi(){
 }
 
 void scheduler(){
-    // Create an array with all the ticket numbers
+    /* Create an array with all the ticket numbers */
     int tickets[NUM_TICKETS];
     gchar *message = NULL;
     for(int i = 0; i < NUM_TICKETS; ++i){
-        // Choose a random and unique number
+        /* Choose a random and unique number */
         tickets[i] = i + 1;
     }
 
-    // Shuffle the tickts array
+    /* Shuffle the tickts array */
     srand(time(NULL));
     for (int i = NUM_TICKETS-1; i > 0; i--){
         int j = rand() % (i+1);
         swap(&tickets[i], &tickets[j]);
     }
 
-    // Assign the corresponding amount of tickets to each thread
+    /* Assign the corresponding amount of tickets to each thread */
     int startIndex = 0, endIndex = 0;
     for(int threadId = 0; threadId < NUM_THREADS; ++threadId){
         startIndex = endIndex;
@@ -310,13 +288,13 @@ void scheduler(){
         }
     }
 
-    // Shuffle the tickts array
+    /* Shuffle the tickts array */
     for (int i = NUM_TICKETS-1; i > 0; i--){
         int j = rand() % (i+1);
         swap(&tickets[i], &tickets[j]);
     }
 
-    // Randomly select a winning ticket until there are no tickets
+    /* Randomly select a winning ticket until there are no tickets */
     for(int i = 0; i < NUM_TICKETS; ++i){
         printf("\nDEBUG: Selecting a wining ticket\n");
         while (gtk_events_pending()){
@@ -360,7 +338,6 @@ void scheduler(){
                 gtk_spinner_stop(GTK_SPINNER(THREADS[runningThread->id]->spin));
             }
             else{
-                //updateUI();
                 printf("DEBUG: The proces already finnished its calculations\n");
             }
         }
@@ -449,7 +426,7 @@ int main(int argc, char *argv[]){
 
     /* Allocate memory for pointers to Thread and thread_configuration structs */
     alloc_threads();
-    config = (thread_configuration*)malloc(sizeof(config));
+    config = malloc(sizeof(*config));
 
     /* Init GTK+ */
     gtk_init( &argc, &argv );
