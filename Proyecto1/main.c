@@ -2,24 +2,41 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
+#include <signal.h>
 #include <stdbool.h>
-#include "piApproximation.c"
+#include <sys/time.h>
+
 #include "gui.h"
+#include "timer/timer.h"
 
 #define NUM_THREADS 5
 #define MINIMUN_WORK_UNIT 50
 
+void scheduler();
+
 typedef struct{
     int id;
     int mode;               /* 0 expropiatory, 1 Non expropiatory */
-    int result;             /* pi calculation result/progress */
+    double result;          /* pi calculation result/progress */
     int executed;           /* To know if the thread has been executed yet */
-    int workUnits;          /* Amount of work units */
-    int workPercentage;     /* Between 0-100% */
-    int numTickets;         /* Number of assigned tickets */
+    float workUnits;          /* Amount of work units:
+                             * PI terms to calculate depending on the
+                             * selected working units. 1 woking unit == 50 piTerms */
+    double workPercentage;  /* Between 0-100% */
+    int numTickets;         /* Individual number of assigned tickets */
     int* tickets;           /* Lottery tickets */
-    int quantum;            /* Lottery tickets*/
     sigjmp_buf buffer;      /* Thread buffer */
+    int finnished;
+    double denom;
+    double numer;
+    double divisor;
+    double sign;
+    /* Widgets associated to the thread */
+    GtkWidget *bar;
+    GtkWidget *text_box;
+    GtkWidget *spin;
+    float iterations;
+    float oneStepIterations;
 } Thread;
 
 /* Configuration data retrieved from the GUI */
@@ -29,20 +46,20 @@ struct thread_configuration{
     int number_tickets;
     int amount_work;
     int quantum;
-    int current_selection; /* To know which thread is being configured */
+    double work_percent;
+    int current_selection;  /* To know which thread is being configured */
 };
 
-int NUM_TICKETS = 0;            /* Total ammount of tickets to be assigned */
+int QUANTUM_SIZE = 0;           /* Defined in miliseconds */
+int NUM_TICKETS = 0;            /* Total amount of tickets to be assigned */
 Thread* THREADS[NUM_THREADS];
 Thread* runningThread;
 sigjmp_buf parent;
-GuiObjects  *gui=NULL;
+GuiObjects *gui=NULL;
 struct thread_configuration* config;
 
-void scheduler();
-
 G_MODULE_EXPORT void
-create_about_page (GtkButton *button)
+create_about_page (GtkImageMenuItem *MenuItem)
 {
     GtkWidget *about_window = NULL;
     GtkWidget *text = NULL;
@@ -72,31 +89,39 @@ create_about_page (GtkButton *button)
 G_MODULE_EXPORT void
 button_clicked (GtkButton *button)
 {
-    g_print( "Thread scheduling started\n" );
+    g_print("Thread scheduling started\n");
     g_print("Number of tickets: %d\n", config->number_tickets);
-    g_print("Amount of work: %d\n", config->amount_work);
+    g_print("Work units: %d\n", config->amount_work);
     g_print("Quantum: %d\n", config->quantum);
+    g_print("Work Percentage: %f\n", config->work_percent);
     g_print("Mode: %d\n", config->mode);
 
     /* Initialize all the threads */
     for(int thread = 0; thread < NUM_THREADS; ++thread){
-        THREADS[thread] = (Thread*) malloc(sizeof(Thread));
         THREADS[thread]->id = thread;
         THREADS[thread]->mode = config->mode;
         THREADS[thread]->result = 0;
         THREADS[thread]->executed = 0;
-        THREADS[thread]->workPercentage = 0;
         THREADS[thread]->workUnits = config->amount_work*MINIMUN_WORK_UNIT;
-        //~ THREADS[thread]->numTickets = config->number_tickets;
+        THREADS[thread]->workPercentage = config->work_percent;
         THREADS[thread]->tickets = malloc(config->number_tickets * sizeof(int));
-        //~ THREADS[thread]->quantum = config->quantum;
-    }
+        THREADS[thread]->numer= 4.0;
+        THREADS[thread]->denom= 0;
+        THREADS[thread]->iterations= 0;
+        THREADS[thread]->divisor= 1;
+        THREADS[thread]->sign= 1;
+        THREADS[thread]->oneStepIterations=0;
 
-    /*Disable execute button after execution taking effect*/
+        /* Add the tickets of each individual thread */
+        NUM_TICKETS += THREADS[thread]->numTickets;
+    }
+    QUANTUM_SIZE = config->quantum;
+
+    /* Disable execute button after execution taking effect */
     gtk_widget_set_sensitive (GTK_WIDGET(button), FALSE);
 
     /* Call the scheduler to start the program */
-    //~ scheduler();
+    scheduler();
 
     /* Free allocated memory */
     for(int thread = 0; thread < NUM_THREADS; ++thread){
@@ -118,23 +143,36 @@ entry_activate_amount_work (GtkEntry *entry, gpointer user_data)
 {
     config->amount_work = atoi(gtk_entry_get_text (entry));
     g_print( "Current selected thread: %d\n",  config->current_selection);
-    g_print("Amount of work: %d\n", config->amount_work);
+    g_print("Work units: %d\n", config->amount_work);
 }
 
 G_MODULE_EXPORT void
 entry_activate_quantum (GtkEntry *entry, gpointer user_data)
 {
     struct Thread *d = user_data;
-    config->quantum = atoi(gtk_entry_get_text (entry));
+    if(config->mode == 1){
+        config->work_percent = atoi(gtk_entry_get_text (entry));
+        THREADS[config->current_selection]->workPercentage = config->work_percent;
+    }
+    else {
+        config->quantum = atoi(gtk_entry_get_text (entry));
+        QUANTUM_SIZE = config->quantum;
+    }
     g_print( "Current selected thread: %d\n",  config->current_selection);
+    g_print("config->work_percent: %f\n", config->work_percent);
     g_print("config->quantum: %d\n", config->quantum);
-    THREADS[config->current_selection]->quantum = config->quantum;
 }
 
 G_MODULE_EXPORT void
 activate_combo_box0 (GtkComboBox *combo_box)
 {
     config->mode = gtk_combo_box_get_active (GTK_COMBO_BOX(combo_box));
+    if(config->mode == 1){
+        gtk_label_set_text (GTK_LABEL(gui->quantum_label),"Work Percentage");
+    }
+    else {
+        gtk_label_set_text (GTK_LABEL(gui->quantum_label),"Quantum");
+    }
     g_print( "Current selected thread: %d\n",  config->mode);
 }
 
@@ -145,108 +183,101 @@ activate_combo_box1 (GtkComboBox *combo_box)
     g_print( "Current selected thread: %d\n",  config->current_selection);
 }
 
+
+/* Callback that is fired when the timer's time is up */
+void timerHandler(int pSig)
+{
+    printf("DEBUG: Time is up!!! \n");
+    siglongjmp(parent, 1);
+}
+
 void swap (int *a, int *b){
     int temp = *a;
     *a = *b;
     *b = temp;
 }
 
-void calculatePi(){
-    double progress=0.0;// percent
-    long long int i,fractionValue,fractionValueAdjusted,totalWork;
-    LookUp* ptrPiAproximationExpro=getInitState();
-    LookUp* ptrPiAproximationNOExpro=getInitState();
-    
 
-    runningThread->executed = 1;
-    if(runningThread->mode == 0){
-        /*
-            Expropiative: do work during a certaing amount of time
-
-            sigsetjmp -> Saves a checkpoint (stored in runningThread->buffer)
-            siglongjmp -> Moves to a checkpoint (stored in parent)
-        */
-        /*
-            // Since the time could end at any point, need to continously save the progress
-            while(time){
-                // Do calculations
-                runningThread->result = result;
-                sigsetjmp(runningThread->buffer, 1);
-
-                // Do calculations
-                runningThread->result = result;
-                sigsetjmp(runningThread->buffer, 1);
-
-                // Do calculations
-                */
-            if(runningThread->workUnits>0){
-                pi_gregory_pauseable(runningThread->workUnits*MIN_OF_WORK,ptrPiAproximationExpro);
-                //The value of pi is saved in ptrPiAproximationExpro->piSoFar
-                progress=ptrPiAproximationExpro->iterations*100/(runningThread->workUnits*MIN_OF_WORK);
-            }else{
-                printf("\nIncorrect parameters for: workunits: %d\n",runningThread->workUnits);
-            }
-               /*
-            }
-            runningThread->result = result;     // Save result in the object
-            siglongjmp(parent, 1);      // Move back to the scheduler
-        */
-    }
-    else{
-        /*
-            Non-expropiative: do a specific work percentage
-        */
-        if(validateParaetersNoExpropiatives(runningThread->workUnits,runningThread->workPercentage)){
-            fractionValue=totalWork*runningThread->workPercentage/100;
-            fractionValueAdjusted=fractionValue;
-            i=(long long int)totalWork/fractionValue;
-            printf("Total work %lld processing %lld per %lld iteration \n",totalWork,fractionValue,i);
-            while(i-->=0&&fractionValueAdjusted>0){
-                pi_gregory_pauseable(fractionValueAdjusted,ptrPiAproximationNOExpro);
-                //TO PROGRESS PERCENTAGE UNTIL NOW     ->     i+1>0?(long long int)((totalWork/fractionValue-i)*runningThread->workPercentage):100
-                //VALUE OF PI UNTIL NOW                ->     ptrPiAproximationNOExpro->piSoFar
-                if(fractionValueAdjusted>totalWork-ptrPiAproximationNOExpro->iterations)
-                fractionValueAdjusted=totalWork-ptrPiAproximationNOExpro->iterations;
-                printf("This line has be replaced with the command required to release the thread.\n");
-            }
-            // TO CONSULT FINAL VULE OF PI             ->     ptrPiAproximationNOExpro->piSoFar
-            // TO CONSULT THE TOTAL ITERATIONS DONE    ->     ptrPiAproximationNOExpro->iterations
-        }else{
-            printf("\nIncorrect parameters for: percentage: %d or workunits: %d\n",runningThread->workPercentage,runningThread->workUnits);
-        }
-        //The final value of pi is saved in ptrPiAproximationExpro->piSoFar
-        /*
-            sigsetjmp(runningThread->buffer, 1);    // Save chackpoint so we can return later
-            while(runningThread->workPercentage > completedWorkPercentage){
-                // Do calculations
-            }
-            runningThread->result = result;     // Save result in the object
-            siglongjmp(parent, 1);      // Move back to the scheduler
-        */
-    }
-
-    for(int i = 0; i < 10; ++i){
-        if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
+void updateUI(){
+    float progress=runningThread->iterations/runningThread->workUnits;
+    gchar* message = g_strdup_printf ("PID: %d/ %.0f%%", runningThread->id+1, progress*100);
+    gtk_progress_bar_set_text (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), message);
+    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(THREADS[runningThread->id]->bar), progress);
+    gtk_entry_set_text(GTK_ENTRY(THREADS[runningThread->id]->text_box),g_strdup_printf ("%1.16lf",runningThread->result*4));
+    while (gtk_events_pending()){
+        gtk_main_iteration();
     }
 }
 
+
+void calculatePi(){
+    runningThread->executed = 1;
+    sigsetjmp(runningThread->buffer, 1);
+
+    float progress; /* percent */
+    sigsetjmp(runningThread->buffer, 1);
+
+    long long int calculatedTerms,termsToCalculate;
+    sigsetjmp(runningThread->buffer, 1);
+
+    double term = 0.0;
+    sigsetjmp(runningThread->buffer, 1);
+
+    if(runningThread->mode == 1){
+        calculatedTerms = 0;
+        termsToCalculate = (runningThread->workUnits * runningThread->workPercentage ) / 100;
+        calculatedTerms=termsToCalculate;
+        runningThread->oneStepIterations=termsToCalculate;
+
+    }
+
+    /*
+        Expropiative: do work during a certaing amount of time
+        Non-expropiative: do a specific work percentage
+    */
+
+    for(int piTerm = 0; piTerm < runningThread->workUnits&&runningThread->iterations<runningThread->workUnits; ++piTerm){
+
+        runningThread->result += runningThread->sign / runningThread->divisor;
+        sigsetjmp(runningThread->buffer, 1);
+        runningThread->divisor += 2;
+        sigsetjmp(runningThread->buffer, 1);
+        runningThread->sign = -1*runningThread->sign;
+        sigsetjmp(runningThread->buffer, 1);
+        runningThread->iterations++;
+        sigsetjmp(runningThread->buffer, 1);
+
+        if(runningThread->mode == 1){
+            updateUI();
+            if((int)runningThread->iterations%(int)runningThread->oneStepIterations==0){
+                calculatedTerms = termsToCalculate;
+                if(sigsetjmp(runningThread->buffer, 1) == 0) siglongjmp(parent, 1);
+            }
+        }
+    }
+
+    printf("DEBUG: Process %d ended its execution\n", runningThread->id);
+    runningThread->finnished = 1;
+    siglongjmp(parent, 1);
+}
+
 void scheduler(){
-    printf("Entered scheduler\n");
-    // Create an array with all the ticket numbers
+    /* Create an array with all the ticket numbers */
     int tickets[NUM_TICKETS];
+    gchar *message = NULL;
     for(int i = 0; i < NUM_TICKETS; ++i){
-        // Choose a random and unique number
+        /* Choose a random and unique number */
         tickets[i] = i + 1;
     }
 
-    // Shuffle the tickts array
+    /* Shuffle the tickts array */
     srand(time(NULL));
     for (int i = NUM_TICKETS-1; i > 0; i--){
         int j = rand() % (i+1);
         swap(&tickets[i], &tickets[j]);
     }
 
-    // Assign the corresponding amount of tickets to each thread
+    /* Assign the corresponding amount of tickets to each thread */
     int startIndex = 0, endIndex = 0;
     for(int threadId = 0; threadId < NUM_THREADS; ++threadId){
         startIndex = endIndex;
@@ -256,16 +287,19 @@ void scheduler(){
         }
     }
 
-
-    // Shuffle the tickts array
+    /* Shuffle the tickts array */
     for (int i = NUM_TICKETS-1; i > 0; i--){
         int j = rand() % (i+1);
         swap(&tickets[i], &tickets[j]);
     }
 
-    // Randomly select a winning ticket until there are no tickets
+    /* Randomly select a winning ticket until there are no tickets */
     for(int i = 0; i < NUM_TICKETS; ++i){
-        printf("Selecting a wining ticket\n");
+        printf("\nDEBUG: Selecting a wining ticket\n");
+        while (gtk_events_pending()){
+            gtk_main_iteration();
+        }
+
         int ticket = tickets[i];
         int threadId;
         int winnerFound = 0;
@@ -278,18 +312,47 @@ void scheduler(){
             }
             if(winnerFound) break;
         }
-        printf("The winning ticket is %d and the winner is %d\n", ticket, threadId);
-        runningThread = THREADS[threadId];
-        if(runningThread->executed){
-            if(sigsetjmp(parent, 1) == 0) siglongjmp(THREADS[threadId]->buffer, threadId);
+        if(threadId < NUM_THREADS){
+            printf("DEBUG: The winning ticket is %d and the winner is %d\n", ticket, threadId);
+            runningThread = THREADS[threadId];
+            if(runningThread->finnished == 0){
+                gtk_spinner_start(GTK_SPINNER(THREADS[runningThread->id]->spin));
+                if(sigsetjmp(parent, 1) == 0){
+                    if(runningThread->mode == 0){
+                        setUpTimer(timerHandler);
+                        setTimer(QUANTUM_SIZE);
+                    }
+                    if(runningThread->executed){
+                        printf("DEBUG: The proces was already executed\n");
+                        siglongjmp(runningThread->buffer, threadId);
+                    }
+                    else{
+                        printf("DEBUG: The proces wasn't already executed\n");
+                        calculatePi();
+                    }
+                }
+                if(runningThread->mode == 0){
+                    updateUI();
+                }
+                gtk_spinner_stop(GTK_SPINNER(THREADS[runningThread->id]->spin));
+            }
+            else{
+                printf("DEBUG: The proces already finnished its calculations\n");
+            }
         }
         else{
-            if(sigsetjmp(parent, 1) == 0) calculatePi();
+            printf("threadId > NUM_THREADS!\n");
+            --i;
         }
+    }
+
+    printf("\nAll the tickets were chosen, here are the results:\n");
+    for(int threadId = 0; threadId < NUM_THREADS; ++threadId){
+        printf("    %d: %lf\n",threadId, THREADS[threadId]->result);
     }
 }
 
-GuiObjects * init_gui(GuiObjects  *gui){
+GuiObjects * init_gui(){
 
     GtkBuilder  *builder; /* To generate GtkWidgets from XML */
     GError  *error = NULL;
@@ -306,37 +369,45 @@ GuiObjects * init_gui(GuiObjects  *gui){
 
     /* Allocate data structure */
     gui = g_slice_new( GuiObjects );
-
     /* Get objects required to change dinamically from the GUI */
+
     GW( main_window );
     GW( about_window );
-    GW( bar0 );
-    GW( text_box0 );
-    GW( spin0 );
-    GW( bar1 );
-    GW( text_box1 );
-    GW( spin1 );
-    GW( bar2 );
-    GW( text_box2 );
-    GW( spin2 );
-    GW( bar3 );
-    GW( text_box3 );
-    GW( spin3 );
-    GW( bar4 );
-    GW( text_box4 );
-    GW( spin4 );
     GW( combo_box0 );
+    GW( combo_box1 );
     GW( entry_number_threads );
     GW( entry_number_tickets );
     GW( entry_amount_work );
     GW( entry_quantum );
+    GW( button0 );
+    GW( menu_item_help );
+    GW( quantum_label );
 
+    CH_GET_OBJECT_THREAD(builder, bar0, GTK_WIDGET, THREADS, 0, bar);
+    CH_GET_OBJECT_THREAD(builder, bar1, GTK_WIDGET, THREADS, 1, bar);
+    CH_GET_OBJECT_THREAD(builder, bar2, GTK_WIDGET, THREADS, 2, bar);
+    CH_GET_OBJECT_THREAD(builder, bar3, GTK_WIDGET, THREADS, 3, bar);
+    CH_GET_OBJECT_THREAD(builder, bar4, GTK_WIDGET, THREADS, 4, bar);
+    CH_GET_OBJECT_THREAD(builder, text_box0, GTK_WIDGET, THREADS, 0, text_box);
+    CH_GET_OBJECT_THREAD(builder, text_box1, GTK_WIDGET, THREADS, 1, text_box);
+    CH_GET_OBJECT_THREAD(builder, text_box2, GTK_WIDGET, THREADS, 2, text_box);
+    CH_GET_OBJECT_THREAD(builder, text_box3, GTK_WIDGET, THREADS, 3, text_box);
+    CH_GET_OBJECT_THREAD(builder, text_box4, GTK_WIDGET, THREADS, 4, text_box);
+    CH_GET_OBJECT_THREAD(builder, spin0, GTK_WIDGET, THREADS, 0, spin);
+    CH_GET_OBJECT_THREAD(builder, spin1, GTK_WIDGET, THREADS, 1, spin);
+    CH_GET_OBJECT_THREAD(builder, spin2, GTK_WIDGET, THREADS, 2, spin);
+    CH_GET_OBJECT_THREAD(builder, spin3, GTK_WIDGET, THREADS, 3, spin);
+    CH_GET_OBJECT_THREAD(builder, spin4, GTK_WIDGET, THREADS, 4, spin);
+
+    /* Connect signals and callbacks */
     g_signal_connect (gui->entry_number_tickets, "activate", G_CALLBACK (entry_activate_number_tickets), THREADS[NUM_THREADS]);
-    g_signal_connect (gui->entry_number_tickets, "activate", G_CALLBACK (entry_activate_amount_work), config);
-    g_signal_connect (gui->entry_amount_work, "activate", G_CALLBACK (entry_activate_quantum), THREADS[NUM_THREADS]);
-
-    /* Connect signals */
-    gtk_builder_connect_signals( builder, gui->main_window );
+    g_signal_connect (gui->entry_amount_work, "activate", G_CALLBACK (entry_activate_amount_work), config);
+    g_signal_connect (gui->entry_quantum, "activate", G_CALLBACK (entry_activate_quantum), THREADS[NUM_THREADS]);
+    g_signal_connect (gui->combo_box0, "changed", G_CALLBACK (activate_combo_box0), config);
+    g_signal_connect (gui->combo_box1, "changed", G_CALLBACK (activate_combo_box1), config);
+    g_signal_connect (gui->button0, "clicked", G_CALLBACK (button_clicked), config);
+    g_signal_connect (gui->menu_item_help, "activate", G_CALLBACK (create_about_page), config);
+    g_signal_connect (gui->main_window, "destroy", G_CALLBACK (gtk_main_quit), config);
 
     /* Destroy builder, since we don't need it anymore */
     g_object_unref( G_OBJECT( builder ) );
@@ -352,6 +423,7 @@ void alloc_threads () {
 
 int main(int argc, char *argv[]){
 
+    /* Allocate memory for pointers to Thread and thread_configuration structs */
     alloc_threads();
     config = malloc(sizeof(*config));
 
@@ -363,8 +435,6 @@ int main(int argc, char *argv[]){
 
     /*Set the GtkWindow to appear*/
     gtk_widget_show(gui->main_window);
-
-    /* Get the configuration from the GUI */
 
     /* Main Gtk loop */
     gtk_main();

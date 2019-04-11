@@ -10,6 +10,9 @@
     CH_GET_OBJECT( builder, name, GTK_WIDGET, data )
 #define GW( name ) CH_GET_WIDGET( builder, name, gui )
 
+#define CH_GET_OBJECT_THREAD( builder, name, type, data, index, widget) \
+    data[index]->widget = type( gtk_builder_get_object( builder, #name ) )
+
 #define GUI_FILE "thread_scheduling.glade"
 
 /* Main data structure definition of the GUI Objects*/
@@ -40,10 +43,13 @@ struct _GuiObjects
     GtkWidget *entry_number_tickets;
     GtkWidget *entry_amount_work;
     GtkWidget *entry_quantum;
+    GtkWidget *button0;
+    GtkWidget *menu_item_help;
+    GtkWidget *quantum_label;
 };
 
 G_MODULE_EXPORT void
-create_about_page (GtkButton *button);
+create_about_page (GtkImageMenuItem *MenuItem);
 
 G_MODULE_EXPORT void
 button_clicked (GtkButton *button);
