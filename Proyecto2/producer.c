@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
+
+#include "utilities/message/message.h"
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
@@ -25,6 +28,9 @@ int main(int argc, char *argv[])
     
     char* producer_message = "Hello";
 
+    Message * message = calloc(1, sizeof(Message));
+    *message = (Message) { 25, time(NULL), 1, 0 };
+
     /* Get shared memory file descriptor on the region */
     fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1)
@@ -43,7 +49,7 @@ int main(int argc, char *argv[])
     }
 
     /* Place message in the shared buffer */
-    memcpy(shmem, producer_message, sizeof(producer_message));
+    memcpy(shmem, message, sizeof(message));
 
     printf("Producer saw file descriptor: %d\n", fd);
     printf("Producer mapped to address: %p\n", shmem);

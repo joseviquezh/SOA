@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "utilities/message/message.h"
+
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
 
@@ -21,7 +23,7 @@ void* map_file_descriptor(size_t size, int fd) {
 int main(int argc, char *argv[])
 {
     int fd;
-    void* shmem;
+    Message* shmem;
 
     char data[BUFFER_SIZE];
 
@@ -43,7 +45,10 @@ int main(int argc, char *argv[])
     }
 
     /* Place data from shared buffer into this process memory */
-    memcpy(data, shmem, BUFFER_SIZE);
+    //memcpy(data, shmem, BUFFER_SIZE);
+
+    Message message = shmem[0];
+    printf ("Message producer id = %i \n", message.producerId);
 
     printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);

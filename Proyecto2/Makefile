@@ -5,11 +5,11 @@ creator: creator.c
 	@echo creator build done
 
 producer: producer.c
-	@gcc -o producer producer.c -lrt
+	@gcc -o producer producer.c utilities/message/message.h -lrt
 	@echo producer build done
 	
 consumer: consumer.c
-	@gcc -o consumer consumer.c -lrt
+	@gcc -o consumer consumer.c utilities/message/message.h -lrt
 	@echo consumer build done
 	
 finalizer: finalizer.c
