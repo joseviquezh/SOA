@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
 
 #include "utilities/message/message.h"
 
@@ -24,8 +25,11 @@ int main(int argc, char *argv[])
 {
     int fd;
     void* shmem;
+    Message * message;
+    int count = 0;
+    int flag;
 
-    char data[BUFFER_SIZE];
+    int processPid = getppid();
 
     /* Get shared memory file descriptor on the region*/
     fd = shm_open(STORAGE_ID, O_RDONLY, S_IRUSR | S_IWUSR);
@@ -44,20 +48,16 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Place data from shared buffer into this process memory */
-    //memcpy(data, shmem, BUFFER_SIZE);
-
-    Message * message = shmem;
-    printf ("Message producer id = %i \n", message->producerId);
-    printf ("Message key = %i \n", message->key);
-    printf ("Message stop = %i \n", message->stop);
-
-    struct tm tm = *localtime(&message->createdAt);
-    printf("Message created at: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-
     printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
-    printf("Consumer read: \"%s\"\n", data);
 
-    return 0;
+    do {
+        message = shmem;
+        printMessage(message);
+        count = ++count;
+        flag = (message->stop == 1) ? 0 : processPid % message->key;
+        sleep(1);
+    } while (count < 5 && flag > 0);
+
+    printf("Consumer %i ended with flag: %i\n", processPid, flag);
 }

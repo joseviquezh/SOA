@@ -7,3 +7,5 @@ typedef struct {
     int stop;
     time_t createdAt;
 } Message;
+
+void printMessage (Message * message);
