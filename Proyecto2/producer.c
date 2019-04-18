@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "utilities/message/message.h"
 
@@ -20,6 +21,16 @@ void* map_file_descriptor(size_t size, int fd) {
   return mmap(NULL, size, protection, visibility, fd, 0);
 }
 
+time_t getCurrentDateTime () {
+    time_t now;
+    time(&now);
+
+    struct tm tm = *localtime(&now);
+    printf("Current datetime: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    return now;
+}
+
 /* Main function */
 int main(int argc, char *argv[])
 {
@@ -27,9 +38,6 @@ int main(int argc, char *argv[])
     void* shmem;
     
     char* producer_message = "Hello";
-
-    Message * message = calloc(1, sizeof(Message));
-    *message = (Message) { 25, time(NULL), 1, 0 };
 
     /* Get shared memory file descriptor on the region */
     fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
@@ -48,12 +56,17 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    Message * message = calloc(1, sizeof(Message));
+    *message = (Message) { getppid(), 1, 0, getCurrentDateTime() };
+
     /* Place message in the shared buffer */
-    memcpy(shmem, message, sizeof(message));
+    memcpy(shmem, message, sizeof(Message));
 
     printf("Producer saw file descriptor: %d\n", fd);
     printf("Producer mapped to address: %p\n", shmem);
     printf("Producer wrote: \"%s\"\n", producer_message);
+
+    sleep(15);
 
     return 0;
 }

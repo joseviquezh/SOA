@@ -3,7 +3,7 @@
 
 typedef struct {
     int producerId;
-    time_t createdAt;
     int key;
     int stop;
+    time_t createdAt;
 } Message;

@@ -23,7 +23,7 @@ void* map_file_descriptor(size_t size, int fd) {
 int main(int argc, char *argv[])
 {
     int fd;
-    Message* shmem;
+    void* shmem;
 
     char data[BUFFER_SIZE];
 
@@ -47,8 +47,13 @@ int main(int argc, char *argv[])
     /* Place data from shared buffer into this process memory */
     //memcpy(data, shmem, BUFFER_SIZE);
 
-    Message message = shmem[0];
-    printf ("Message producer id = %i \n", message.producerId);
+    Message * message = shmem;
+    printf ("Message producer id = %i \n", message->producerId);
+    printf ("Message key = %i \n", message->key);
+    printf ("Message stop = %i \n", message->stop);
+
+    struct tm tm = *localtime(&message->createdAt);
+    printf("Message created at: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
