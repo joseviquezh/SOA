@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         messagesRead = ++messagesRead;
 
         count = ++count;
-        flag = (message->stop == 1) ? 0 : processPid % message->key;
+        flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1);
         
         sleep(getWaitTime(avgWaitTime));
     } while (count < 5 && flag > 0);
