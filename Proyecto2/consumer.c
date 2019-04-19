@@ -20,14 +20,25 @@ void* map_file_descriptor(size_t size, int fd) {
   return mmap(NULL, size, protection, visibility, fd, 0);
 }
 
+int getWaitTime (int avgWaitTime) {
+    return avgWaitTime;
+}
+
 /* Main function */
 int main(int argc, char *argv[])
 {
     int fd;
     void* shmem;
+    
     Message * message;
+    
     int count = 0;
     int flag;
+    
+    int messagesRead = 0;
+    double waitTime = 0;
+    
+    int avgWaitTime = 1;
 
     int processPid = getppid();
 
@@ -52,11 +63,15 @@ int main(int argc, char *argv[])
     printf("Consumer mapped to address: %p\n", shmem);
 
     do {
-        message = shmem;
+        message = shmem + (count * sizeof(Message) + 1);
         printMessage(message);
+        
+        messagesRead = ++messagesRead;
+        
         count = ++count;
         flag = (message->stop == 1) ? 0 : processPid % message->key;
-        sleep(1);
+        
+        sleep(getWaitTime(avgWaitTime));
     } while (count < 5 && flag > 0);
 
     printf("Consumer %i ended with flag: %i\n", processPid, flag);
