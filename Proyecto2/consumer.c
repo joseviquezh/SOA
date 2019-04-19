@@ -12,6 +12,8 @@
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
+#define CONSUMERS_ALIVE "/CONSUMERS_ALIVE"
+#define PRODUCERS_ALIVE "/PRODUCERS_ALIVE"
 
 void* map_file_descriptor(size_t size, int fd) {
   /* The memory buffer will be readable */
@@ -27,13 +29,28 @@ int getWaitTime (int avgWaitTime) {
     return avgWaitTime;
 }
 
+void * openSharedRegion (char * name, int size) {
+    int fd;
+    void* shreg;
+
+    /* Get shared memory file descriptor on the region*/
+    fd = shm_open(STORAGE_ID, O_RDONLY, S_IRUSR | S_IWUSR);
+    if (fd == -1)
+    {
+        perror("open");
+    }
+
+    /* Map file descriptor to an address region */
+    return map_file_descriptor(BUFFER_SIZE, fd);
+}
+
 /* Main function */
 int main(int argc, char *argv[])
 {
-    int fd;
     void* shmem;
+    int * consumersAlive;
+    
     sem_t * semaphore = openSemaphore();
-
     if (semaphore == SEM_FAILED) printf("ERROR | Couldn't open the semaphore\n");
     
     Message * message;
@@ -48,37 +65,40 @@ int main(int argc, char *argv[])
 
     int processPid = getppid();
 
-    /* Get shared memory file descriptor on the region*/
-    fd = shm_open(STORAGE_ID, O_RDONLY, S_IRUSR | S_IWUSR);
-    if (fd == -1)
-    {
-        perror("open");
-        return fd;
-    }
-
-    /* Map file descriptor to an address region */
-    shmem = map_file_descriptor(BUFFER_SIZE, fd);
-
+    shmem = openSharedRegion(STORAGE_ID, BUFFER_SIZE);
     if (shmem == MAP_FAILED)
     {
         perror("mmap");
         return -1;
     }
 
-    printf("Consumer saw file descriptor: %d\n", fd);
+    consumersAlive = openSharedRegion(STORAGE_ID, sizeof(int));
+    if (shmem == MAP_FAILED)
+    {
+        perror("mmap");
+        return -1;
+    }
+
+    consumersAlive = ++consumersAlive;
+
+    //printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
 
     do {
 
         clock_t begin = clock();
-        printf("Trying to access semaphore \n");
         sem_wait(semaphore);
         clock_t end = clock();
 
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
         
         message = shmem + (count * sizeof(Message));
+        
+        printf("\n--------------------------------------------------\n");
+        printf("Consumer ID: %i\n", processPid);
         printMessage(message);
+        printf("Current consumers alive : %i \n", *consumersAlive);
+        printf("--------------------------------------------------\n\n");
 
         messagesRead = ++messagesRead;
 
@@ -88,8 +108,13 @@ int main(int argc, char *argv[])
         sem_post(semaphore);
         
         sleep(getWaitTime(avgWaitTime));
-    } while (count < 5 && flag > 0);
+    } while (count < 20 && flag > 0);
 
-    printf("Consumer %i ended with flag: %i\n", processPid, flag);
+    consumersAlive = --consumersAlive;
+    printf("------------------------------------------------------\n");
+    printf("Consumer %i ended \n", processPid);
     printf("Total blocked time: %f \n", waitTime);
+    printf("Total messages read: %i\n", messagesRead);
+    printf("------------------------------------------------------\n");
+
 }

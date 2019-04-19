@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
         sleep(1);
         //free(message);
-    } while (count < 5);
+    } while (count < 20);
 
     printf("Producer %i ended \n", processPid);
 
