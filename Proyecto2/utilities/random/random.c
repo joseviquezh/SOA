@@ -12,5 +12,5 @@ int generateRandom(int lower, int upper)
 
 int generateRandomKey() 
 { 
-    return generateRandom(0, 4); 
+    return generateRandom(1, 5); 
 } 

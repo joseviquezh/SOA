@@ -63,11 +63,11 @@ int main(int argc, char *argv[])
     printf("Consumer mapped to address: %p\n", shmem);
 
     do {
-        message = shmem + (count * sizeof(Message) + 1);
+        message = shmem + (count * sizeof(Message));
         printMessage(message);
-        
+
         messagesRead = ++messagesRead;
-        
+
         count = ++count;
         flag = (message->stop == 1) ? 0 : processPid % message->key;
         

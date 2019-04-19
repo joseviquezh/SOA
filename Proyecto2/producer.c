@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         *message = (Message) { processPid, randomKey, 0, getCurrentDateTime() };
         
         /* Place message in the shared buffer */
-        memcpy(shmem + (count * sizeof(Message) + 1), message, sizeof(Message));
+        memcpy(shmem + (count * sizeof(Message)), message, sizeof(Message));
 
         count = ++count;
         sleep(1);
