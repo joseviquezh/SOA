@@ -1,15 +1,15 @@
 all: creator producer consumer finalizer
 
 creator: creator.c
-	@gcc -o creator creator.c -lrt
+	@gcc -o creator creator.c circ_buff.h circ_buff.c -lrt
 	@echo creator build done
 
 producer: producer.c
-	@gcc -o producer producer.c -lrt
+	@gcc -o producer producer.c circ_buff.h circ_buff.c -lrt
 	@echo producer build done
 	
 consumer: consumer.c
-	@gcc -o consumer consumer.c -lrt
+	@gcc -o consumer consumer.c circ_buff.h circ_buff.c -lrt
 	@echo consumer build done
 	
 finalizer: finalizer.c

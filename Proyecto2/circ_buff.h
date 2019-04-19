@@ -17,6 +17,14 @@
 typedef struct circ_buff circ_buff;
 typedef circ_buff* cbuf_p;
 
+struct circ_buff {
+    int data [BUFFER_SIZE];
+    size_t head;
+    size_t tail;
+    size_t max; //of the buffer
+    bool full;
+};
+
 static void advance_pointer(cbuf_p cbuf);
 
 static void retreat_pointer(cbuf_p cbuf);
@@ -31,6 +39,6 @@ void circ_buff_free(cbuf_p cbuf);
 
 void circ_buff_reset(cbuf_p cbuf);
 
-cbuf_p circ_buff_init(int *data, size_t size);
+cbuf_p circ_buff_init(cbuf_p cbuf, size_t size);
 
 #endif //CIRC_BUFF_H_

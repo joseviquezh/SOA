@@ -4,12 +4,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define BUFFER_SIZE 256
+#include "circ_buff.h"
+
 #define STORAGE_ID "/SHARED_REGION"
 
 void* map_file_descriptor(size_t size, int fd) {
   /* The memory buffer will be readable */
-  int protection = PROT_READ;
+  int protection = PROT_READ | PROT_WRITE;
 
   /* Only this process and its children will be able to use it */
   int visibility = MAP_SHARED;
@@ -22,19 +23,21 @@ int main(int argc, char *argv[])
 {
     int fd;
     void* shmem;
-
-    char data[BUFFER_SIZE];
+    cbuf_p cbuf;
+    size_t shmem_size;
 
     /* Get shared memory file descriptor on the region*/
-    fd = shm_open(STORAGE_ID, O_RDONLY, S_IRUSR | S_IWUSR);
+    fd = shm_open(STORAGE_ID, O_RDWR, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         perror("open");
         return fd;
     }
 
+    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
+
     /* Map file descriptor to an address region */
-    shmem = map_file_descriptor(BUFFER_SIZE, fd);
+    shmem = map_file_descriptor(shmem_size, fd);
 
     if (shmem == MAP_FAILED)
     {
@@ -42,12 +45,15 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Place data from shared buffer into this process memory */
-    memcpy(data, shmem, BUFFER_SIZE);
+    cbuf = (cbuf_p) shmem;
 
-    printf("Consumer saw file descriptor: %d\n", fd);
-    printf("Consumer mapped to address: %p\n", shmem);
-    printf("Consumer read: \"%s\"\n", data);
+    /* Place data from shared buffer into this process memory */
+    while(!circ_buff_empty(cbuf))
+    {
+        int data;
+        circ_buff_get(cbuf, &data);
+        printf("Consumer read: \"%d\"\n", data);
+    }
 
     return 0;
 }
