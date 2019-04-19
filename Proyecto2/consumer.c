@@ -4,8 +4,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <semaphore.h>
+#include <time.h>
 
 #include "utilities/message/message.h"
+#include "utilities/semaphore/semaphore.h"
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
@@ -29,6 +32,9 @@ int main(int argc, char *argv[])
 {
     int fd;
     void* shmem;
+    sem_t * semaphore = openSemaphore();
+
+    if (semaphore == SEM_FAILED) printf("ERROR | Couldn't open the semaphore\n");
     
     Message * message;
     
@@ -63,6 +69,14 @@ int main(int argc, char *argv[])
     printf("Consumer mapped to address: %p\n", shmem);
 
     do {
+
+        clock_t begin = clock();
+        printf("Trying to access semaphore \n");
+        sem_wait(semaphore);
+        clock_t end = clock();
+
+        waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
+        
         message = shmem + (count * sizeof(Message));
         printMessage(message);
 
@@ -70,9 +84,12 @@ int main(int argc, char *argv[])
 
         count = ++count;
         flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1);
+
+        sem_post(semaphore);
         
         sleep(getWaitTime(avgWaitTime));
     } while (count < 5 && flag > 0);
 
     printf("Consumer %i ended with flag: %i\n", processPid, flag);
+    printf("Total blocked time: %f \n", waitTime);
 }

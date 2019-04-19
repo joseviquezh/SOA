@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <semaphore.h>
+
+#include "utilities/semaphore/semaphore.h"
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
@@ -28,6 +31,8 @@ int main(int argc, char *argv[])
         perror("ftruncate");
         return ret;
     }
+
+    sem_close(createSemaphore());
 
     printf("Shared buffer created: %d\n", fd);
     return 0;

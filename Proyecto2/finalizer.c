@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <semaphore.h>
+
+#include "utilities/semaphore/semaphore.h"
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"

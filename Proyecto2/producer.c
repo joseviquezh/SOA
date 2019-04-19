@@ -5,10 +5,12 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <semaphore.h>
 
 #include "utilities/message/message.h"
 #include "utilities/date/date.h"
 #include "utilities/random/random.h"
+#include "utilities/semaphore/semaphore.h"
 
 #define BUFFER_SIZE 256
 #define STORAGE_ID "/SHARED_REGION"
@@ -28,9 +30,12 @@ int main(int argc, char *argv[])
 {
     int fd;
     void* shmem;
+    
+    int processPid = getppid();
+    sem_t * semaphore = openSemaphore();
+    
     int count = 0;
     int flag;
-    int processPid = getppid();
 
     /* Get shared memory file descriptor on the region */
     fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
@@ -53,6 +58,8 @@ int main(int argc, char *argv[])
     printf("Producer mapped to address: %p\n", shmem);
 
     do {
+        sem_wait(semaphore);
+
         Message * message = calloc(1, sizeof(Message));
         int randomKey = generateRandomKey();
         *message = (Message) { processPid, randomKey, 0, getCurrentDateTime() };
@@ -61,6 +68,9 @@ int main(int argc, char *argv[])
         memcpy(shmem + (count * sizeof(Message)), message, sizeof(Message));
 
         count = ++count;
+
+        sem_post(semaphore);
+
         sleep(1);
         //free(message);
     } while (count < 5);
