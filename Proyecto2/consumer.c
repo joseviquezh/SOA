@@ -60,10 +60,13 @@ int main(int argc, char *argv[])
     
     int messagesRead = 0;
     double waitTime = 0;
+    double asleepTime = 0;
     
     int avgWaitTime = 1;
 
     int processPid = getppid();
+
+    int messageSize = sizeof(Message);
 
     shmem = openSharedRegion(STORAGE_ID, BUFFER_SIZE);
     if (shmem == MAP_FAILED)
@@ -72,14 +75,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    consumersAlive = openSharedRegion(STORAGE_ID, sizeof(int));
+    consumersAlive = openSharedRegion(CONSUMERS_ALIVE, sizeof(int));
     if (shmem == MAP_FAILED)
     {
         perror("mmap");
         return -1;
     }
 
-    consumersAlive = ++consumersAlive;
+    consumersAlive = consumersAlive += 1;
 
     //printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
@@ -92,28 +95,35 @@ int main(int argc, char *argv[])
 
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
         
-        message = shmem + (count * sizeof(Message));
+        message = shmem + (count * messageSize);
         
         printf("\n--------------------------------------------------\n");
         printf("Consumer ID: %i\n", processPid);
+        printf("Message from index: %i \n", count);
         printMessage(message);
-        printf("Current consumers alive : %i \n", *consumersAlive);
+        printf("Current consumers alive: %i \n", *consumersAlive);
         printf("--------------------------------------------------\n\n");
 
         messagesRead = ++messagesRead;
 
         count = ++count;
-        flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1);
+        flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1 );
 
         sem_post(semaphore);
         
-        sleep(getWaitTime(avgWaitTime));
+        int timeToWait = getWaitTime(avgWaitTime);
+        sleep(timeToWait);
+        
+        asleepTime = asleepTime += timeToWait;
+
     } while (count < 20 && flag > 0);
 
-    consumersAlive = --consumersAlive;
+    consumersAlive = consumersAlive -= 1;
+    
     printf("------------------------------------------------------\n");
     printf("Consumer %i ended \n", processPid);
-    printf("Total blocked time: %f \n", waitTime);
+    printf("Total time blocked: %f \n", waitTime);
+    printf("Total time asleep: %f\n", asleepTime);
     printf("Total messages read: %i\n", messagesRead);
     printf("------------------------------------------------------\n");
 
