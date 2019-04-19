@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <semaphore.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include "utilities/message/message.h"
 #include "utilities/semaphore/semaphore.h"
@@ -31,7 +32,6 @@ int getWaitTime (int avgWaitTime) {
 
 void * openSharedRegion (char * name, int size) {
     int fd;
-    void* shreg;
 
     /* Get shared memory file descriptor on the region*/
     fd = shm_open(STORAGE_ID, O_RDONLY, S_IRUSR | S_IWUSR);
@@ -82,7 +82,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    consumersAlive = consumersAlive += 1;
+    // Here shared memory with consumersAlive must be mapped
+    consumersAlive = calloc(1, sizeof(int));
+    *consumersAlive = 0;
+    // ----
+
+    *consumersAlive = *consumersAlive += 1;
 
     //printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
@@ -118,7 +123,7 @@ int main(int argc, char *argv[])
 
     } while (count < 20 && flag > 0);
 
-    consumersAlive = consumersAlive -= 1;
+    *consumersAlive = *consumersAlive -= 1;
     
     printf("------------------------------------------------------\n");
     printf("Consumer %i ended \n", processPid);
