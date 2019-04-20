@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     
     int avgWaitTime = 1;
 
-    int processPid = getppid();
+    int consumerPid = getppid();
 
     int messageSize = sizeof(Message);
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         Message * message = calloc(1, sizeof(Message));
         int read = circ_buff_get(cbuf, message);
         
-        printf("\n------------------- CONSUMER %i -------------------------\n", processPid);
+        printf("\n------------------- CONSUMER %i -------------------------\n", consumerPid);
         printf("MESSAGE READ \n");
         printf("Message from index: %li \n", cbuf->head); // Get index for Message in buffer
         printMessage(message);
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
         sem_post(semaphore);
 
         count = ++count;
-        flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1 );
+        flag = (message->stop == 1) ? 0 : ( (consumerPid % 5) == message->key ? 0 : 1 );
 
         if (flag == 0) break;
         
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     
     *consumersAlive = *consumersAlive -= 1;
     
-    printf("\n------------------- CONSUMER %i -------------------------\n", processPid);
+    printf("\n------------------- CONSUMER %i -------------------------\n", consumerPid);
     printf("FINISHED \n");
     printf("Total time blocked: %f \n", waitTime);
     printf("Total time asleep: %f\n", asleepTime);

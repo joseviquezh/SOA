@@ -41,8 +41,6 @@ int main(int argc, char *argv[])
     cbuf_p cbuf;
     size_t shmem_size;
 
-    int producer_message  = 101;
-
     /* Get shared memory file descriptor on the region */
     fd = shm_open(STORAGE_ID, O_RDWR , S_IRUSR | S_IWUSR);
     if (fd == -1)

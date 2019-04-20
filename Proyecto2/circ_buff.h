@@ -15,6 +15,7 @@
 #include "utilities/message/message.h"
 
 #define BUFFER_SIZE 10
+#define MESSAGE_SIZE 64
 
 typedef struct circ_buff circ_buff;
 typedef circ_buff* cbuf_p;
