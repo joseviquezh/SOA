@@ -1,3 +1,6 @@
+#ifndef MESSAGE_H_
+#define MESSAGE_H_
+
 // System includes
 #include <time.h>
 
@@ -9,3 +12,4 @@ typedef struct {
 } Message;
 
 void printMessage (Message * message);
+#endif //MESSAGE_H_

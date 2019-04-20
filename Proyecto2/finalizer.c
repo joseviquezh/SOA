@@ -62,5 +62,7 @@ int main(int argc, char *argv[])
         return fd;
     }
 
+    removeSemaphore();
+
     return 0;
 }

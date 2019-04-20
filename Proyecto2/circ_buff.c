@@ -1,4 +1,5 @@
 #include "circ_buff.h"
+#include "utilities/message/message.h"
 
 #define ENTRY_SIZE 256
 
@@ -29,8 +30,7 @@ bool circ_buff_empty(cbuf_p cbuf)
 
     return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
-
-int circ_buff_get(cbuf_p cbuf, int * data)
+int circ_buff_get(cbuf_p cbuf, Message * data)
 {
     assert(cbuf && data && cbuf->data);
 
@@ -38,7 +38,7 @@ int circ_buff_get(cbuf_p cbuf, int * data)
 
     if(!circ_buff_empty(cbuf))
     {
-        memcpy(data, &cbuf->data[cbuf->tail], sizeof(data));
+        memcpy(data, &cbuf->data[cbuf->tail], sizeof(Message));
         retreat_pointer(cbuf);
 
         r = 0;
@@ -47,11 +47,11 @@ int circ_buff_get(cbuf_p cbuf, int * data)
     return r;
 }
 
-void circ_buff_set(cbuf_p cbuf, int data)
+void circ_buff_set(cbuf_p cbuf, Message data)
 {
     assert(cbuf && cbuf->data);
 
-    memcpy(&cbuf->data[cbuf->head], &data, sizeof(data));
+    memcpy(&cbuf->data[cbuf->head], &data, sizeof(Message));
 
     advance_pointer(cbuf);
 }

@@ -111,49 +111,44 @@ int main(int argc, char *argv[])
     /* Place data from shared buffer into this process memory */
     while(!circ_buff_empty(cbuf))
     {
-        int data;
-        circ_buff_get(cbuf, &data);
-        printf("Consumer read: \"%d\"\n", data);
-    }
-
-    /*do {
-
         clock_t begin = clock();
         sem_wait(semaphore);
         clock_t end = clock();
 
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
+
+        Message * message = calloc(1, sizeof(Message));
+        int read = circ_buff_get(cbuf, message);
         
-        message = shmem + (count * messageSize);
-        
-        printf("\n--------------------------------------------------\n");
-        printf("Consumer ID: %i\n", processPid);
-        printf("Message from index: %i \n", count);
+        printf("\n------------------- CONSUMER %i -------------------------\n", processPid);
+        printf("MESSAGE READ \n");
+        printf("Message from index: %li \n", cbuf->head); // Get index for Message in buffer
         printMessage(message);
         printf("Current consumers alive: %i \n", *consumersAlive);
         printf("--------------------------------------------------\n\n");
 
         messagesRead = ++messagesRead;
+        sem_post(semaphore);
 
         count = ++count;
         flag = (message->stop == 1) ? 0 : ( (processPid % 5) == message->key ? 0 : 1 );
 
-        sem_post(semaphore);
+        if (flag == 0) break;
         
         int timeToWait = getWaitTime(avgWaitTime);
         sleep(timeToWait);
         
         asleepTime = asleepTime += timeToWait;
-
-    } while (count < 20 && flag > 0);
-
+    }
+    
+    sem_close(semaphore);
+    
     *consumersAlive = *consumersAlive -= 1;
     
-    printf("------------------------------------------------------\n");
-    printf("Consumer %i ended \n", processPid);
+    printf("\n------------------- CONSUMER %i -------------------------\n", processPid);
+    printf("FINISHED \n");
     printf("Total time blocked: %f \n", waitTime);
     printf("Total time asleep: %f\n", asleepTime);
     printf("Total messages read: %i\n", messagesRead);
     printf("------------------------------------------------------\n");
-    */
 }

@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     void* shmem;
     cbuf_p cbuf;
     size_t shmem_size;
+    sem_t * semaphore;
 
     /* Get shared memory file descriptor on the region*/
     int fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
@@ -49,8 +50,11 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    sem_close(createSemaphore());
-    
+    createSemaphore();
+    semaphore = openSemaphore();
+    sem_post(semaphore);
+    sem_close(semaphore);
+
     shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
 
     /* Map file descriptor to an address region */

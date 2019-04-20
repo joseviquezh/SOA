@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         return fd;
     }
 
-    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
+    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(Message);
 
     /* Map file descriptor to an address region */
     shmem = map_file_descriptor(shmem_size, fd);
@@ -70,29 +70,23 @@ int main(int argc, char *argv[])
     cbuf = (cbuf_p) shmem;
 
     /* Place message in the shared buffer */
-    circ_buff_set(cbuf, producer_message);
     for(int i = 0; i < BUFFER_SIZE+5; i++)
     {
-        circ_buff_set(cbuf, i);
-        printf("Producer wrote: \"%d\"\n", i);
-    }
-
-    /*do {
         sem_wait(semaphore);
 
         Message * message = calloc(1, sizeof(Message));
         int randomKey = generateRandomKey();
         *message = (Message) { processPid, randomKey, 0, getCurrentDateTime() };
         
-        memcpy(shmem + (count * sizeof(Message)), message, sizeof(Message));
-
-        count = ++count;
-
+        printf("\n\n -------- PRODUCER %i ---------\n", processPid);
+        printf("WRITE MESSAGE \n");
+        printMessage(message);
+        printf("-----------------------------------\n");
+        circ_buff_set(cbuf, *message);
+        
         sem_post(semaphore);
-
         sleep(1);
-        //free(message);
-    } while (count < 20);*/
+    }
 
     return 0;
 }
