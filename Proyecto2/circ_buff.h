@@ -20,7 +20,7 @@ typedef struct circ_buff circ_buff;
 typedef circ_buff* cbuf_p;
 
 struct circ_buff {
-    Message data [BUFFER_SIZE];
+    int data [BUFFER_SIZE];
     size_t head;
     size_t tail;
     size_t max; //of the buffer
