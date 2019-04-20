@@ -13,12 +13,13 @@
 #include <stdbool.h>
 
 #define BUFFER_SIZE 10
+#define MESSAGE_SIZE 64
 
 typedef struct circ_buff circ_buff;
 typedef circ_buff* cbuf_p;
 
 struct circ_buff {
-    int data [BUFFER_SIZE];
+    char data[BUFFER_SIZE][MESSAGE_SIZE];
     size_t head;
     size_t tail;
     size_t max; //of the buffer
@@ -31,9 +32,9 @@ static void retreat_pointer(cbuf_p cbuf);
 
 bool circ_buff_empty(cbuf_p cbuf);
 
-int circ_buff_get(cbuf_p cbuf, int * data);
+int circ_buff_get(cbuf_p cbuf, char data[MESSAGE_SIZE]);
 
-void circ_buff_set(cbuf_p cbuf, int data);
+void circ_buff_set(cbuf_p cbuf, char data[MESSAGE_SIZE]);
 
 void circ_buff_free(cbuf_p cbuf);
 

@@ -30,7 +30,7 @@ bool circ_buff_empty(cbuf_p cbuf)
     return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
 
-int circ_buff_get(cbuf_p cbuf, int * data)
+int circ_buff_get(cbuf_p cbuf, char data[MESSAGE_SIZE])
 {
     assert(cbuf && data && cbuf->data);
 
@@ -38,7 +38,7 @@ int circ_buff_get(cbuf_p cbuf, int * data)
 
     if(!circ_buff_empty(cbuf))
     {
-        memcpy(data, &cbuf->data[cbuf->tail], sizeof(data));
+        memcpy(data, &cbuf->data[cbuf->tail], sizeof(char)*MESSAGE_SIZE);
         retreat_pointer(cbuf);
 
         r = 0;
@@ -47,11 +47,11 @@ int circ_buff_get(cbuf_p cbuf, int * data)
     return r;
 }
 
-void circ_buff_set(cbuf_p cbuf, int data)
+void circ_buff_set(cbuf_p cbuf, char data[MESSAGE_SIZE])
 {
     assert(cbuf && cbuf->data);
 
-    memcpy(&cbuf->data[cbuf->head], &data, sizeof(data));
+    memcpy(&cbuf->data[cbuf->head], data, sizeof(char)*MESSAGE_SIZE);
 
     advance_pointer(cbuf);
 }

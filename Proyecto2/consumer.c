@@ -50,9 +50,9 @@ int main(int argc, char *argv[])
     /* Place data from shared buffer into this process memory */
     while(!circ_buff_empty(cbuf))
     {
-        int data;
-        circ_buff_get(cbuf, &data);
-        printf("Consumer read: \"%d\"\n", data);
+        char data[MESSAGE_SIZE];
+        circ_buff_get(cbuf, data);
+        printf("Consumer read: \"%s\"\n", data);
     }
 
     return 0;
