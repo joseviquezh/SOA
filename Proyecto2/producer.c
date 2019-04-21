@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 
     int avgWaitTime = 1;
 
-    int producerPid = getppid();
+    pid_t producerPid = getpid();
 
     int messageSize = sizeof(Message);
 
