@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     clock_t begin = clock();
     sem_wait(semaphore);
     clock_t end = clock();
-
+    srand((unsigned)time(NULL));
     /* Place messages in the buffer*/
     while(cbuf->stop == false/*&& (producerPid % 5) == message->key*/)
     {

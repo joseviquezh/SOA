@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     clock_t begin = clock();
     sem_wait(semaphore);
     clock_t end = clock();
-
+    srand((unsigned)time(NULL));
     /* Place data from shared buffer into this process memory */
     while(cbuf->stop == false /*&& (consumerPid % 5) == message->key*/)
     {
