@@ -26,6 +26,10 @@ struct circ_buff {
     size_t tail;
     size_t max; //of the buffer
     bool full;
+    bool stop;
+    int consumersAlive;
+    int producersAlive;
+
 };
 
 static void advance_pointer(cbuf_p cbuf);

@@ -50,10 +50,10 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    createSemaphore();
-    semaphore = openSemaphore();
-    sem_post(semaphore);
-    sem_close(semaphore);
+    semaphore = createSemaphore();
+    if (semaphore == SEM_FAILED) perror("Creating semaphore");
+    printf("%p\n", semaphore);
+    closeSemaphore(semaphore);
 
     shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
 

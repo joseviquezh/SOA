@@ -69,6 +69,9 @@ void circ_buff_reset(cbuf_p cbuf)
     cbuf->head = 0;
     cbuf->tail = 0;
     cbuf->full = false;
+    cbuf->stop = false;
+    cbuf->consumersAlive = 0;
+    cbuf->producersAlive = 0;
 }
 
 cbuf_p circ_buff_init(cbuf_p cbuf, size_t size)

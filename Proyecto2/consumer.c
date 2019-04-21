@@ -9,13 +9,13 @@
 #include <stdlib.h>
 
 #include "utilities/message/message.h"
+#include "utilities/date/date.h"
+#include "utilities/random/random.h"
 #include "utilities/semaphore/semaphore.h"
 
 #include "circ_buff.h"
 
 #define STORAGE_ID "/SHARED_REGION"
-#define CONSUMERS_ALIVE "/CONSUMERS_ALIVE"
-#define PRODUCERS_ALIVE "/PRODUCERS_ALIVE"
 
 void* map_file_descriptor(size_t size, int fd) {
   /* The memory buffer will be readable */
@@ -49,20 +49,21 @@ void * openSharedRegion (char * name, int size) {
 int main(int argc, char *argv[])
 {
     void* shmem;
-    int * consumersAlive;
-    
+    //int * consumersAlive;
+
     sem_t * semaphore = openSemaphore();
-    if (semaphore == SEM_FAILED) printf("ERROR | Couldn't open the semaphore\n");
-    
+    if (semaphore == SEM_FAILED) perror("Opening semaphore");
+    printf("%p\n", semaphore);
+
     Message * message;
-    
+
     int count = 0;
     int flag;
-    
+
     int messagesRead = 0;
     double waitTime = 0;
     double asleepTime = 0;
-    
+
     int avgWaitTime = 1;
 
     int consumerPid = getppid();
@@ -98,57 +99,67 @@ int main(int argc, char *argv[])
     }*/
 
     // Here shared memory with consumersAlive must be mapped
-    consumersAlive = calloc(1, sizeof(int));
-    *consumersAlive = 0;
+    //consumersAlive = calloc(1, sizeof(int));
+    //*consumersAlive = 0;
     // ----
 
-    *consumersAlive = *consumersAlive += 1;
+    //*consumersAlive = *consumersAlive += 1;
 
-    //printf("Consumer saw file descriptor: %d\n", fd);
+    printf("Consumer saw file descriptor: %d\n", fd);
     printf("Consumer mapped to address: %p\n", shmem);
+
     cbuf = (cbuf_p) shmem;
 
+    //fork
+    ++cbuf->consumersAlive;
     /* Place data from shared buffer into this process memory */
-    while(!circ_buff_empty(cbuf))
+    clock_t begin = clock();
+    sem_wait(semaphore);
+    clock_t end = clock();
+    while(cbuf->stop == false /*&& (consumerPid % 5) == message->key*/)
     {
-        clock_t begin = clock();
-        sem_wait(semaphore);
-        clock_t end = clock();
-
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
 
         Message * message = calloc(1, sizeof(Message));
         int read = circ_buff_get(cbuf, message);
-        
+
         printf("\n------------------- CONSUMER %i -------------------------\n", consumerPid);
         printf("MESSAGE READ \n");
         printf("Message from index: %li \n", cbuf->head); // Get index for Message in buffer
         printMessage(message);
-        printf("Current consumers alive: %i \n", *consumersAlive);
+        printf("Current consumers alive: %i \n", cbuf->consumersAlive);
         printf("--------------------------------------------------\n\n");
 
-        messagesRead = ++messagesRead;
+        ++messagesRead;
         sem_post(semaphore);
-
+        /*
         count = ++count;
-        flag = (message->stop == 1) ? 0 : ( (consumerPid % 5) == message->key ? 0 : 1 );
+
+        flag = (cbuf->stop) ? 0 : ( (consumerPid % 5) == message->key ? 0 : 1 );
 
         if (flag == 0) break;
-        
+        */
         int timeToWait = getWaitTime(avgWaitTime);
         sleep(timeToWait);
-        
+
         asleepTime = asleepTime += timeToWait;
+
+        begin = clock();
+        sem_wait(semaphore);
+        end = clock();
     }
-    
-    sem_close(semaphore);
-    
-    *consumersAlive = *consumersAlive -= 1;
-    
+
+    closeSemaphore(semaphore);
+
+    //*consumersAlive = *consumersAlive -= 1;
+    --cbuf->consumersAlive;
+
     printf("\n------------------- CONSUMER %i -------------------------\n", consumerPid);
     printf("FINISHED \n");
     printf("Total time blocked: %f \n", waitTime);
     printf("Total time asleep: %f\n", asleepTime);
     printf("Total messages read: %i\n", messagesRead);
     printf("------------------------------------------------------\n");
+
+    return 0;
 }

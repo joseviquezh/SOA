@@ -1,5 +1,6 @@
 #include <semaphore.h>
 
 sem_t * createSemaphore();
-void removeSemaphore ();
+void unlinkSemaphore();
+void closeSemaphore ();
 sem_t * openSemaphore ();

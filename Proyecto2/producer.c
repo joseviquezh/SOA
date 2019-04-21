@@ -3,9 +3,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <semaphore.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "utilities/message/message.h"
 #include "utilities/date/date.h"
@@ -17,7 +18,7 @@
 #define STORAGE_ID "/SHARED_REGION"
 
 void* map_file_descriptor(size_t size, int fd) {
-  /* The memory buffer will be writable: */
+  /* The memory buffer will be readable */
   int protection = PROT_READ | PROT_WRITE;
 
   /* Only this process and its children will be able to use it */
@@ -26,18 +27,50 @@ void* map_file_descriptor(size_t size, int fd) {
   return mmap(NULL, size, protection, visibility, fd, 0);
 }
 
+int getWaitTime (int avgWaitTime) {
+    return avgWaitTime;
+}
+
+void * openSharedRegion (char * name, int size) {
+    int fd;
+
+    /* Get shared memory file descriptor on the region*/
+    fd = shm_open(STORAGE_ID, O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd == -1)
+    {
+        perror("open");
+    }
+
+    /* Map file descriptor to an address region */
+    return map_file_descriptor(BUFFER_SIZE, fd);
+}
+
 /* Main function */
 int main(int argc, char *argv[])
 {
-    int fd;
     void* shmem;
-    
-    int processPid = getppid();
+    //int * consumersAlive;
+
     sem_t * semaphore = openSemaphore();
-    
+    if (semaphore == SEM_FAILED) perror("Opening semaphore");
+    printf("%p\n", semaphore);
+
+    Message * message;
+
     int count = 0;
     int flag;
-    
+
+    int messagesPost = 0;
+    double waitTime = 0;
+    double asleepTime = 0;
+
+    int avgWaitTime = 1;
+
+    int producerPid = getppid();
+
+    int messageSize = sizeof(Message);
+
+    int fd;
     cbuf_p cbuf;
     size_t shmem_size;
 
@@ -64,27 +97,60 @@ int main(int argc, char *argv[])
     printf("Producer mapped to address: %p\n", shmem);
 
 
-    printf("Producer %i ended \n", processPid);
+    //printf("Producer %i ended \n", producerPid);
+
     cbuf = (cbuf_p) shmem;
 
+    // fork
+    ++cbuf->producersAlive;
+
     /* Place message in the shared buffer */
-    for(int i = 0; i < BUFFER_SIZE+5; i++)
+    clock_t begin = clock();
+    sem_wait(semaphore);
+    clock_t end = clock();
+    while(cbuf->stop == false/*&& (producerPid % 5) == message->key*/)
     {
-        sem_wait(semaphore);
+        waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
 
         Message * message = calloc(1, sizeof(Message));
         int randomKey = generateRandomKey();
-        *message = (Message) { processPid, randomKey, 0, getCurrentDateTime() };
-        
-        printf("\n\n -------- PRODUCER %i ---------\n", processPid);
-        printf("WRITE MESSAGE \n");
+        *message = (Message) { producerPid, randomKey, 0, getCurrentDateTime() };
+
+        printf("\n\n -------- PRODUCER %i ---------\n", producerPid);
+        printf("MESSAGE WRITE\n");
         printMessage(message);
+        printf("Current producers alive: %i \n", cbuf->producersAlive);
         printf("-----------------------------------\n");
         circ_buff_set(cbuf, *message);
-        
+
         sem_post(semaphore);
-        sleep(1);
+        /*
+        count = ++count;
+        flag = (cbuf->stop) ? 0 : ( (consumerPid % 5) == message->key ? 0 : 1 );
+
+        if (flag == 0) break;
+        */
+        int timeToWait = getWaitTime(avgWaitTime);
+        sleep(timeToWait);
+
+        asleepTime = asleepTime += timeToWait;
+
+        begin = clock();
+        sem_wait(semaphore);
+        end = clock();
     }
+
+    closeSemaphore(semaphore);
+
+    //*consumersAlive = *consumersAlive -= 1;
+    --cbuf->producersAlive;
+
+    printf("\n------------------- PRODUCER %i -------------------------\n", producerPid);
+    printf("FINISHED \n");
+    printf("Total time blocked: %f \n", waitTime);
+    printf("Total time asleep: %f\n", asleepTime);
+    printf("Total messages posted: %i\n", messagesPost);
+    printf("------------------------------------------------------\n");
 
     return 0;
 }
