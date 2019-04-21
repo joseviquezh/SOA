@@ -23,6 +23,10 @@ void* map_file_descriptor(size_t size, int fd) {
 
   return mmap(NULL, size, protection, visibility, fd, 0);
 }
+void printIntrucctions(){
+  printf("Expected %d mandatory and %d optional parameters\n",1,0);
+  printf("Mandatory: Add \"--buffer\" <Buffer Name>\n");
+}
 
 /* Main function */
 int main(int argc, char *argv[])
@@ -30,6 +34,10 @@ int main(int argc, char *argv[])
     char* buffer_name;
     if(argc > 3){
       printf("There were more arguments supplied than expected\n");
+      printIntrucctions();
+      return 1;
+    }else if(argc<3){
+      printIntrucctions();
       return 1;
     }
     else{

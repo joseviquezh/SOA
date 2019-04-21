@@ -31,12 +31,23 @@ int getWaitTime (int avgWaitTime) {
     return avgWaitTime;
 }
 
+void printIntrucctions(){
+  printf("Expected %d mandatory and %d optional parameters\n",1,1);
+  printf("Mandatory: Add \"--buffer\" <Buffer Name>\n");
+  printf("Optional: Add \"--lambda\" <Number>:  Lambda exponential distribution parameter *default value 20\n");
+}
+
 /* Main function */
 int main(int argc, char *argv[])
 {
     char* buffer_name;
-    if(argc > 3){
+    double exp_lambda=1;
+    if(argc > 5){
       printf("There were more arguments supplied than expected\n");
+      printIntrucctions();
+      return 1;
+    }else if(argc<3){
+      printIntrucctions();
       return 1;
     }
     else{
@@ -46,6 +57,14 @@ int main(int argc, char *argv[])
       else{
         printf("Incorrect argument %s\n", argv[1]);
         return 1;
+      }
+      if(argc > 3){
+        if(strcmp("--lambda", argv[3]) == 0){
+          exp_lambda = atof(argv[4]);
+        }
+        else{
+          printf("Using default lambda %lf", exp_lambda);
+        }
       }
     }
 
@@ -121,9 +140,9 @@ int main(int argc, char *argv[])
         ++messagesRead;
         sem_post(semaphore);
 
-        int timeToWait = (int) generateExponetialDisNumber();
+        int timeToWait =(int) (generateExponetialDisNumber(exp_lambda)*1000.0);
         printf("Going to sleep for %d miliseconds...\n", timeToWait);
-        sleep(timeToWait);
+        usleep(timeToWait);
 
         asleepTime = asleepTime += timeToWait;
 

@@ -17,9 +17,7 @@ int generateRandomKey()
     return generateRandom(0, 4); 
 } 
 
-double exp_lambda=0.05;
-
-double generateExponetialDisNumber(){
+double generateExponetialDisNumber(double exp_lambda){
     double u;
     u = rand() / (RAND_MAX + 1.0);
     return -log(1- u) / exp_lambda;
@@ -28,8 +26,8 @@ double generateExponetialDisNumber(){
 double generateExponetialDisNumberTest(){
     int i;
     srand((unsigned)time(NULL));
-    exp_lambda=0.05;
+    double exp_lambda=0.05;
     for (i=0; i<20; i++)
-        printf("%f\n", generateExponetialDisNumber());
+        printf("%f\n", generateExponetialDisNumber(exp_lambda));
     return 0;
 }
