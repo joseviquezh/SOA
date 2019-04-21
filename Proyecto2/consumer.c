@@ -121,7 +121,8 @@ int main(int argc, char *argv[])
         ++messagesRead;
         sem_post(semaphore);
 
-        int timeToWait = getWaitTime(avgWaitTime);
+        int timeToWait = (int) generateExponetialDisNumber();
+        printf("Going to sleep for %d miliseconds...\n", timeToWait);
         sleep(timeToWait);
 
         asleepTime = asleepTime += timeToWait;

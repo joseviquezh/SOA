@@ -123,7 +123,8 @@ int main(int argc, char *argv[])
         sem_post(semaphore);
         ++messagesPost;
 
-        int timeToWait = getWaitTime(avgWaitTime);
+        int timeToWait =(int) generateExponetialDisNumber();
+        printf("Going to sleep for %d miliseconds...\n", timeToWait);
         sleep(timeToWait);
 
         asleepTime = asleepTime += timeToWait;

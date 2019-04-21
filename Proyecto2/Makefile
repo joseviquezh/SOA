@@ -5,11 +5,11 @@ creator: creator.c
 	@echo creator build done
 
 producer: producer.c
-	@gcc -o producer producer.c circ_buff.h circ_buff.c utilities/message/message.c utilities/date/date.c utilities/random/random.c utilities/semaphore/semaphore.c -lrt -lpthread
+	@gcc -o producer producer.c circ_buff.h circ_buff.c utilities/message/message.c utilities/date/date.c utilities/random/random.c utilities/semaphore/semaphore.c -lrt -lpthread -lm
 	@echo producer build done
 
 consumer: consumer.c
-	@gcc -o consumer consumer.c circ_buff.h circ_buff.c utilities/message/message.c utilities/semaphore/semaphore.c -lrt -lpthread
+	@gcc -o consumer consumer.c circ_buff.h circ_buff.c utilities/message/message.c utilities/random/random.c utilities/semaphore/semaphore.c -lrt -lpthread -lm
 	@echo consumer build done
 
 finalizer: finalizer.c
