@@ -13,7 +13,7 @@ consumer: consumer.c
 	@echo consumer build done
 
 finalizer: finalizer.c
-	@gcc -o finalizer finalizer.c utilities/semaphore/semaphore.c utilities/timer/timer.c -lrt -lpthread
+	@gcc -o finalizer finalizer.c utilities/semaphore/semaphore.c -lrt -lpthread
 	@echo finalizer build done
 
 clean:
