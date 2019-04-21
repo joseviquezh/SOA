@@ -34,7 +34,7 @@ int getWaitTime (int avgWaitTime) {
 void printIntrucctions(){
   printf("Expected %d mandatory and %d optional parameters\n",1,1);
   printf("Mandatory: Add \"--buffer\" <Buffer Name>\n");
-  printf("Optional: Add \"--lambda\" <Number>:  Lambda exponential distribution parameter *default value 20\n");
+  printf("Optional: Add \"--lambda\" <Number>:  Lambda exponential distribution parameter *default value 1\n");
 }
 
 
