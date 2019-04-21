@@ -27,13 +27,28 @@ void* map_file_descriptor(size_t size, int fd) {
 /* Main function */
 int main(int argc, char *argv[])
 {
+    char* buffer_name;
+    if(argc > 3){
+      printf("There were more arguments supplied than expected\n");
+      return 1;
+    }
+    else{
+      if(strcmp("--buffer", argv[1]) == 0){
+        buffer_name = argv[2];
+      }
+      else{
+        printf("Incorrect argument %s\n", argv[1]);
+        return 1;
+      }
+    }
+
     void* shmem;
     cbuf_p cbuf;
     size_t shmem_size;
     sem_t * semaphore;
 
     /* Get shared memory file descriptor on the region*/
-    int fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int fd = shm_open(buffer_name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         perror("open");
@@ -49,10 +64,13 @@ int main(int argc, char *argv[])
         perror("ftruncate");
         return ret;
     }
-
+    /*
+    semaphore = openSemaphore();
+    unlinkSemaphore();
+    closeSemaphore(semaphore);
+    */
     semaphore = createSemaphore();
     if (semaphore == SEM_FAILED) perror("Creating semaphore");
-    printf("%p\n", semaphore);
     closeSemaphore(semaphore);
 
     shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);

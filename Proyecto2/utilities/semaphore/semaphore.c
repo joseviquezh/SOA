@@ -10,7 +10,7 @@
 #define SEMAPHORE_NAME "producer_consumer"
 
 sem_t * createSemaphore () {
-    return sem_open(SEMAPHORE_NAME, O_CREAT | O_EXCL, 0644, 1);
+    return sem_open(SEMAPHORE_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, 1);
 }
 
 void unlinkSemaphore () {

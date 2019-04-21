@@ -10,7 +10,6 @@
 #include "circ_buff.h"
 
 #define STORAGE_ID "/SHARED_REGION"
-#define QUANTUM_SIZE 10
 
 sem_t* semaphore;
 void* map_file_descriptor(size_t size, int fd) {
@@ -18,7 +17,7 @@ void* map_file_descriptor(size_t size, int fd) {
   int protection = PROT_READ | PROT_WRITE;
 
   /* Only this process and its children will be able to use it */
-  int visibility = MAP_ANONYMOUS | MAP_SHARED;
+  int visibility = MAP_SHARED;
 
   return mmap(NULL, size, protection, visibility, fd, 0);
 }
@@ -26,13 +25,37 @@ void* map_file_descriptor(size_t size, int fd) {
 /* Main function */
 int main(int argc, char *argv[])
 {
+    int quantum;
+    char* buffer_name;
+    if(argc > 5){
+      printf("There were more arguments supplied than expected\n");
+      return 1;
+    }
+    else{
+      if(strcmp("--time", argv[1]) == 0){
+        quantum = atoi(argv[2]);
+      }
+      else{
+        printf("Incorrect argument %s\n", argv[1]);
+        return 1;
+      }
+      if(strcmp("--buffer", argv[3]) == 0){
+        buffer_name = argv[4];
+      }
+      else{
+        printf("Incorrect argument %s\n", argv[3]);
+        return 1;
+      }
+    }
+
     int ret;
     int fd;
     void* shmem;
     cbuf_p cbuf;
+    size_t shmem_size;
 
     /* Get shared memory file descriptor on the region*/
-    fd = shm_open(STORAGE_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    fd = shm_open(buffer_name, O_RDWR, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         perror("open");
@@ -42,7 +65,8 @@ int main(int argc, char *argv[])
     printf("Shared buffer to be cleaned: %d\n", fd);
 
     /* Map file descriptor to an address region */
-    shmem = map_file_descriptor(BUFFER_SIZE, fd);
+    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
+    shmem = map_file_descriptor(shmem_size, fd);
 
     if (shmem == MAP_FAILED)
     {
@@ -55,14 +79,18 @@ int main(int argc, char *argv[])
     semaphore = openSemaphore();
     if (semaphore == SEM_FAILED) perror("Opening semaphore");
 
-    //printf("Finalizer will sleep for %d seconds\n", QUANTUM_SIZE);
-    //sleep(QUANTUM_SIZE);
+    printf("Letting the processes to work for %d seconds\n", quantum);
+    sleep(quantum);
+    printf("Time is up!\n");
+
     sem_wait(semaphore);
 
     /* Notify producers and consumers to stop*/
     cbuf->stop = true;
 
     sem_post(semaphore);
+
+    printf("Waiting for all processes to end thei execution\n");
 
     sem_wait(semaphore);
     while(cbuf->consumersAlive > 0 || cbuf->producersAlive >0){
@@ -71,6 +99,7 @@ int main(int argc, char *argv[])
       sem_wait(semaphore);
     }
 
+    printf("Cleaning shared memory\n");
     /* mmap cleanup */
     ret = munmap(shmem, BUFFER_SIZE);
     if (ret == -1)
@@ -80,7 +109,7 @@ int main(int argc, char *argv[])
     }
 
     /* shm_open cleanup */
-    fd = shm_unlink(STORAGE_ID);
+    fd = shm_unlink(buffer_name);
     if (fd == -1)
     {
         perror("unlink");
@@ -88,7 +117,9 @@ int main(int argc, char *argv[])
     }
 
     closeSemaphore(semaphore);
+
     unlinkSemaphore();
 
+    printf("The cleaning was successful\n");
     return 0;
 }

@@ -31,29 +31,27 @@ int getWaitTime (int avgWaitTime) {
     return avgWaitTime;
 }
 
-void * openSharedRegion (char * name, int size) {
-    int fd;
-
-    /* Get shared memory file descriptor on the region*/
-    fd = shm_open(STORAGE_ID, O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd == -1)
-    {
-        perror("open");
-    }
-
-    /* Map file descriptor to an address region */
-    return map_file_descriptor(BUFFER_SIZE, fd);
-}
-
 /* Main function */
 int main(int argc, char *argv[])
 {
+    char* buffer_name;
+    if(argc > 3){
+      printf("There were more arguments supplied than expected\n");
+      return 1;
+    }
+    else{
+      if(strcmp("--buffer", argv[1]) == 0){
+        buffer_name = argv[2];
+      }
+      else{
+        printf("Incorrect argument %s\n", argv[1]);
+        return 1;
+      }
+    }
     void* shmem;
-    //int * consumersAlive;
 
     sem_t * semaphore = openSemaphore();
     if (semaphore == SEM_FAILED) perror("Opening semaphore");
-    printf("%p\n", semaphore);
 
     Message * message;
 
@@ -75,7 +73,7 @@ int main(int argc, char *argv[])
     size_t shmem_size;
 
     /* Get shared memory file descriptor on the region */
-    fd = shm_open(STORAGE_ID, O_RDWR , S_IRUSR | S_IWUSR);
+    fd = shm_open(buffer_name, O_RDWR , S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         perror("open");
@@ -83,8 +81,6 @@ int main(int argc, char *argv[])
     }
 
     shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(Message);
-
-    /* Map file descriptor to an address region */
     shmem = map_file_descriptor(shmem_size, fd);
 
     if (shmem == MAP_FAILED)
@@ -97,17 +93,18 @@ int main(int argc, char *argv[])
     printf("Producer mapped to address: %p\n", shmem);
 
 
-    //printf("Producer %i ended \n", producerPid);
-
     cbuf = (cbuf_p) shmem;
 
-    // fork
+    /* PRODUCE */
+
     ++cbuf->producersAlive;
 
-    /* Place message in the shared buffer */
+    /* Wait for the semaphore*/
     clock_t begin = clock();
     sem_wait(semaphore);
     clock_t end = clock();
+
+    /* Place messages in the buffer*/
     while(cbuf->stop == false/*&& (producerPid % 5) == message->key*/)
     {
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
@@ -124,12 +121,8 @@ int main(int argc, char *argv[])
         circ_buff_set(cbuf, *message);
 
         sem_post(semaphore);
-        /*
-        count = ++count;
-        flag = (cbuf->stop) ? 0 : ( (consumerPid % 5) == message->key ? 0 : 1 );
+        ++messagesPost;
 
-        if (flag == 0) break;
-        */
         int timeToWait = getWaitTime(avgWaitTime);
         sleep(timeToWait);
 
@@ -139,10 +132,9 @@ int main(int argc, char *argv[])
         sem_wait(semaphore);
         end = clock();
     }
-
+    sem_post(semaphore);
     closeSemaphore(semaphore);
 
-    //*consumersAlive = *consumersAlive -= 1;
     --cbuf->producersAlive;
 
     printf("\n------------------- PRODUCER %i -------------------------\n", producerPid);
