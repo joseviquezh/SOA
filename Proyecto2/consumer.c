@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     srand((unsigned)time(NULL));
     ++cbuf->totalConsumers;
     /* Place data from shared buffer into this process memory */
-    while(cbuf->stop == false && (consumerPid % 5) == message->key)
+    while(cbuf->stop == false && (consumerPid % 5) != message->key)
     {
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
 
