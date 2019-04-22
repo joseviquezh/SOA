@@ -34,30 +34,29 @@ int main(int argc, char *argv[])
 {
     int quantum;
     char* buffer_name;
-    if(argc > 5){
-      printf("There were more arguments supplied than expected\n");
-      return 1;
-    }else if(argc<5){
+
+    if(argc != 5){
+      printf("Incorrect ammount of arguments were supplied\n");
       printIntrucctions();
       return 1;
     }
     else{
-      if(strcmp("--time", argv[1]) == 0){
-        quantum = atoi(argv[2]);
-      }
-      else{
-        printf("Incorrect argument %s\n", argv[1]);
-        return 1;
-      }
-      if(strcmp("--buffer", argv[3]) == 0){
-        buffer_name = argv[4];
-      }
-      else{
-        printf("Incorrect argument %s\n", argv[3]);
-        return 1;
+      for(int i = 1; i < argc; ++i){
+        if(strcmp("--time", argv[i]) == 0){
+          quantum = atoi(argv[++i]);
+        }
+        else if(strcmp("--buffer", argv[i]) == 0){
+          buffer_name = argv[++i];
+        }
+        else{
+          printf("Unrecognized argument %s\n", argv[i]);
+          printIntrucctions();
+          return 1;
+        }
       }
     }
 
+    int totalProducers, totalConsumers, totalMessagesRead, totalMessagesCreated;
     int ret;
     int fd;
     void* shmem;
@@ -100,7 +99,7 @@ int main(int argc, char *argv[])
 
     sem_post(semaphore);
 
-    printf("Waiting for all processes to end thei execution\n");
+    printf("Waiting for all processes to end their execution\n");
 
     sem_wait(semaphore);
     while(cbuf->consumersAlive > 0 || cbuf->producersAlive >0){
@@ -108,6 +107,11 @@ int main(int argc, char *argv[])
       sleep(1);
       sem_wait(semaphore);
     }
+
+    totalProducers = cbuf->totalProducers;
+    totalConsumers = cbuf->totalConsumers;
+    totalMessagesRead = cbuf->totalMessagesRead;
+    totalMessagesCreated = cbuf->totalMessagesCreated;
 
     printf("Cleaning shared memory\n");
     /* mmap cleanup */
@@ -130,6 +134,14 @@ int main(int argc, char *argv[])
 
     unlinkSemaphore();
 
-    printf("The cleaning was successful\n");
+    printf("Shared memory was succesfully cleaned\n");
+
+    printf("\n------------------- FINALIZER -------------------------\n");
+    printf("FINISHED \n");
+    printf("Total producers: %i \n", totalProducers);
+    printf("Total consumers: %i\n", totalConsumers);
+    printf("Total messages creaed: %i\n", totalMessagesCreated);
+    printf("Total messages read: %i\n", totalMessagesRead);
+    printf("------------------------------------------------------\n");
     return 0;
 }

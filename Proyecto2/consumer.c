@@ -42,28 +42,24 @@ int main(int argc, char *argv[])
 {
     char* buffer_name;
     double exp_lambda=1;
-    if(argc > 5){
-      printf("There were more arguments supplied than expected\n");
-      printIntrucctions();
-      return 1;
-    }else if(argc<3){
+
+    if(argc != 5 && argc != 3){
+      printf("Incorrect ammount of arguments were supplied\n");
       printIntrucctions();
       return 1;
     }
     else{
-      if(strcmp("--buffer", argv[1]) == 0){
-        buffer_name = argv[2];
-      }
-      else{
-        printf("Incorrect argument %s\n", argv[1]);
-        return 1;
-      }
-      if(argc > 3){
-        if(strcmp("--lambda", argv[3]) == 0){
-          exp_lambda = atof(argv[4]);
+      for(int i = 1; i < argc; ++i){
+        if(strcmp("--lambda", argv[i]) == 0){
+          exp_lambda = atof(argv[++i]);
+        }
+        else if(strcmp("--buffer", argv[i]) == 0){
+          buffer_name = argv[++i];
         }
         else{
-          printf("Using default lambda %lf", exp_lambda);
+          printf("Unrecognized argument %s\n", argv[i]);
+          printIntrucctions();
+          return 1;
         }
       }
     }
@@ -71,7 +67,10 @@ int main(int argc, char *argv[])
     void* shmem;
 
     sem_t * semaphore = openSemaphore();
-    if (semaphore == SEM_FAILED) perror("Opening semaphore");
+    if (semaphore == SEM_FAILED){
+      perror("Opening semaphore");
+      return 1;
+    }
 
     Message * message;
 
@@ -122,8 +121,9 @@ int main(int argc, char *argv[])
     sem_wait(semaphore);
     clock_t end = clock();
     srand((unsigned)time(NULL));
+    ++cbuf->totalConsumers;
     /* Place data from shared buffer into this process memory */
-    while(cbuf->stop == false /*&& (consumerPid % 5) == message->key*/)
+    while(cbuf->stop == false && (consumerPid % 5) == message->key)
     {
         waitTime = waitTime += (double) (end - begin) / CLOCKS_PER_SEC;
 
@@ -138,6 +138,7 @@ int main(int argc, char *argv[])
         printf("--------------------------------------------------\n\n");
 
         ++messagesRead;
+        ++cbuf->totalMessagesRead;
         sem_post(semaphore);
 
         int timeToWait =(int) (generateExponetialDisNumber(exp_lambda)*1000000.0);

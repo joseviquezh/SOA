@@ -29,7 +29,10 @@ struct circ_buff {
     bool stop;
     int consumersAlive;
     int producersAlive;
-
+    int totalProducers;
+    int totalConsumers;
+    int totalMessagesRead;
+    int totalMessagesCreated;
 };
 
 static void advance_pointer(cbuf_p cbuf);

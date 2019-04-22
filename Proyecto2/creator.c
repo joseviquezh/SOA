@@ -33,21 +33,22 @@ void printIntrucctions(){
 int main(int argc, char *argv[])
 {
     char* buffer_name;
-    if(argc > 3){
-      printf("There were more arguments supplied than expected\n");
-      printIntrucctions();
-      return 1;
-    }else if(argc<3){
+
+    if(argc != 3){
+      printf("Incorrect ammount of arguments were supplied\n");
       printIntrucctions();
       return 1;
     }
     else{
-      if(strcmp("--buffer", argv[1]) == 0){
-        buffer_name = argv[2];
-      }
-      else{
-        printf("Incorrect argument %s\n", argv[1]);
-        return 1;
+      for(int i = 1; i < argc; ++i){
+        if(strcmp("--buffer", argv[i]) == 0){
+          buffer_name = argv[++i];
+        }
+        else{
+          printf("Unrecognized argument %s\n", argv[i]);
+          printIntrucctions();
+          return 1;
+        }
       }
     }
 
