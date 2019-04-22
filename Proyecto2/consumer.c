@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
         ++messagesRead;
         sem_post(semaphore);
 
-        int timeToWait =(int) (generateExponetialDisNumber(exp_lambda)*1000.0);
-        printf("Going to sleep for %d miliseconds...\n", timeToWait);
+        int timeToWait =(int) (generateExponetialDisNumber(exp_lambda)*1000000.0);
+        printf("Going to sleep for %d miliseconds...\n", (int)(timeToWait/1000));
         usleep(timeToWait);
 
         asleepTime = asleepTime += timeToWait;
