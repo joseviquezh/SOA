@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     printf("FINISHED \n");
     printf("Total producers: %i \n", totalProducers);
     printf("Total consumers: %i\n", totalConsumers);
-    printf("Total messages creaed: %i\n", totalMessagesCreated);
+    printf("Total messages created: %i\n", totalMessagesCreated);
     printf("Total messages read: %i\n", totalMessagesRead);
     printf("------------------------------------------------------\n");
     return 0;
