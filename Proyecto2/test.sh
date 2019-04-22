@@ -1,15 +1,18 @@
 #!/bin/bash
 
-if [ $# -gt 0 -o $# != 2 ]; then
+if [ $# -lt 0 -o $# != 3 ]; then
     echo "Not enough arguments"
-    break
+    echo "Usage: ./test.sh <PROD_NUM> <CONS_NUM> <FIN_TIMER>"
+    exit 1
 fi
-
-./creator --buffer /sh_mem&
-./finalizer --time 5 --buffer /sh_mem&
 
 PROD_NUM=$1
 CONS_NUM=$2
+FIN_TIMER=$3
+
+./creator --buffer /sh_mem&
+sleep 1
+./finalizer --time $FIN_TIMER --buffer /sh_mem&
 
 while [ $PROD_NUM -gt 0 ];
 do
