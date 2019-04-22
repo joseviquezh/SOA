@@ -40,7 +40,8 @@ the script source to understand how to test it manually.
 * **circ_buff.h/c**: Source code for the circular buffer implementation.
 
 ## What doesn't work
-Everything seems to work according to project specifications.
+The ring buffer size is hardwired in circ_buffer.h in the macro
+BUFFER_SIZE. It's not asked through the CLI.
 
 ## Authors
 * **Victor Arce**
