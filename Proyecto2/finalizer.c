@@ -56,7 +56,8 @@ int main(int argc, char *argv[])
       }
     }
 
-    int totalProducers, totalConsumers, totalMessagesRead, totalMessagesCreated;
+    int totalProducers, totalConsumers,
+    totalMessagesRead, totalMessagesCreated, totalKeyFinCons;
     int ret;
     int fd;
     void* shmem;
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
     totalConsumers = cbuf->totalConsumers;
     totalMessagesRead = cbuf->totalMessagesRead;
     totalMessagesCreated = cbuf->totalMessagesCreated;
+    totalKeyFinCons = cbuf->totalKeyFinCons;
 
     printf("Cleaning shared memory\n");
     /* mmap cleanup */
@@ -140,6 +142,7 @@ int main(int argc, char *argv[])
     printf("FINISHED \n");
     printf("Total producers: %i \n", totalProducers);
     printf("Total consumers: %i\n", totalConsumers);
+    printf("Total consumers finished by key: %i\n", totalKeyFinCons);
     printf("Total messages created: %i\n", totalMessagesCreated);
     printf("Total messages read: %i\n", totalMessagesRead);
     printf("------------------------------------------------------\n");

@@ -33,6 +33,7 @@ struct circ_buff {
     int totalConsumers;
     int totalMessagesRead;
     int totalMessagesCreated;
+    int totalKeyFinCons;
 };
 
 static void advance_pointer(cbuf_p cbuf);

@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     cbuf = (cbuf_p) shmem;
 
     /* CONSUME */
-
+    if (consumerPid % 5 == message->key) ++cbuf->totalKeyFinCons;
     ++cbuf->consumersAlive;
     /* Wait for the semaphore */
     clock_t begin = clock();
