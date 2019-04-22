@@ -1,4 +1,4 @@
-# Proyecto 2: Shared Memory: Producer - Consumer
+# Project 2: Shared Memory: Producer - Consumer
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This is what you need to compile and run this project
 
 ## User guide
 
-To run and use this program follow the next steps:
+To test this project follow the next steps:
 
 1. Run `make` to compile he program
 2. The best way to test the project is through the test.sh script, just
@@ -18,7 +18,7 @@ specify the number of producers, consumers and the finalizer timer (how
 much time in seconds before finalizer shuts down everything), below is an
 usage example:
 
-./test.sh 1 12 10
+`./test.sh 1 12 10`
 
 First argument is the number of producers, second argument the number of
 consumers and the finally the finalizer timer.
