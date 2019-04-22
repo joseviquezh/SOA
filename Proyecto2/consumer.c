@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         return fd;
     }
 
-    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
+    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(Message);
     shmem = map_file_descriptor(shmem_size, fd);
 
     if (shmem == MAP_FAILED)

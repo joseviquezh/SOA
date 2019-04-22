@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "utilities/semaphore/semaphore.h"
+#include "utilities/message/message.h"
 
 #include "circ_buff.h"
 
@@ -63,8 +64,6 @@ int main(int argc, char *argv[])
         return fd;
     }
 
-    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
-
     /* Extend shared memory object as by default it's initialized with size 0 */
     int ret = ftruncate(fd, BUFFER_SIZE);
     if (ret == -1)
@@ -81,7 +80,7 @@ int main(int argc, char *argv[])
     if (semaphore == SEM_FAILED) perror("Creating semaphore");
     closeSemaphore(semaphore);
 
-    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(int);
+    shmem_size = sizeof(circ_buff) + BUFFER_SIZE * sizeof(Message);
 
     /* Map file descriptor to an address region */
     shmem = map_file_descriptor(shmem_size, fd);
