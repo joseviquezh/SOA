@@ -152,8 +152,3 @@ int RM_Run () {
 
     printf("\nend_flag = %i, deadline_flag = %i\n\n", RM_end_flag, RM_deadline_missed_flag);
 }
-
-int RM_GetCurrentTaskIndex () {
-    if (RM_current_items_in_queue) return RM_ready_queue[0].task.id;
-    return 0;
-};
