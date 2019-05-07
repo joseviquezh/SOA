@@ -5,9 +5,11 @@
 #include <unistd.h>
 #include <math.h>
 
+// Custom includes
 #include "task.h"
 #include "algorithms/RM.h"
 #include "test/test.h"
+#include "scheduler/scheduler.h"
 
 // Main
 int main(int argc, char *argv[])
@@ -19,13 +21,25 @@ int main(int argc, char *argv[])
         tasks[i] = (Task) { i + 1, (i + 2) * 2 };;
     }*/
 
-    int tasks_length = 3;
+    /*int tasks_length = 3;
     Task * tasks = calloc(tasks_length, sizeof(Task));
     
     tasks[0] = (Task) { 1, 1, 2 };
     tasks[1] = (Task) { 2, 1, 3 };
-    tasks[2] = (Task) { 3, 1, 6 };
+    tasks[2] = (Task) { 3, 1, 6 };*/
 
+    /*int tasks_length = 2;
+    Task * tasks = calloc(tasks_length, sizeof(Task));
+    
+    tasks[0] = (Task) { 1, 3, 6 };
+    tasks[1] = (Task) { 2, 4, 9 };*/
+
+    int tasks_length = 3;
+    Task * tasks = calloc(tasks_length, sizeof(Task));
+    
+    tasks[0] = (Task) { 1, 1, 6 };
+    tasks[1] = (Task) { 2, 2, 9 };
+    tasks[2] = (Task) { 3, 6, 18 };
 
     printf("\n==========\n");
     printf("i | c | p\n----------\n");
@@ -38,8 +52,8 @@ int main(int argc, char *argv[])
     int test_result = TestRM(tasks, tasks_length);
     printf("test_result = %i\n\n\n", test_result);
 
-    RM_Init(tasks_length, tasks);
-    RM_Run();
+    InitScheduler(tasks_length, tasks, EDF);
+    RunScheduling();
 
     return 0;
 }

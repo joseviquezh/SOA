@@ -1,2 +1,2 @@
 all: main.c
-	gcc main.c -o main task.h algorithms/RM.c test/test.c -lm
+	gcc main.c -o main task.h test/test.c scheduler/scheduler.c -lm
