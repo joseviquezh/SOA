@@ -13,36 +13,97 @@
 
 #define NUM_ALGS 3
 
+
+
 struct algorithms_data{
-    int comp_time;
+    gint task_number;
+    gint comp_time;
     int period;
     int current_selection;
     int result_format; //0: separate slides, 1: one slide
     bool select[NUM_ALGS];
     bool pass;
+    gchar *config_file;
+
 };
 
 GuiObjects *gui=NULL;
 struct algorithms_data* config;
 
+void set_algorithm_select(GtkWidget * wigdet, char value[5]){
+
+    if(strcmp (value, "false")==true){
+        config->select[0] = false;
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), false);
+    }
+    else{
+        config->select[0] = true;
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), true);
+    }
+}
+
+bool load_config_file(char* file)
+{
+    FILE *fin = fopen(file, "r");
+    char str[3];
+    int i,j;
+    gint comp_time;
+    gint period;
+    if (fin!=NULL){
+    char value[5];
+    fscanf(fin,"ResultFormat=%s\n", value);
+    config->result_format = atoi(value);
+    if(strcmp (value, "0")==true){
+        gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 0);
+    }
+    else{
+        gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 1);
+    }
+    fscanf(fin,"RM=%s\n", value);
+    set_algorithm_select(gui->check_select_rm, value);
+    fscanf(fin,"EDF=%s\n", value);
+    set_algorithm_select(gui->check_select_edf, value);
+    fscanf(fin,"LLF=%s\n", value);
+    set_algorithm_select(gui->check_select_llf, value);
+
+    fscanf(fin,"TaskNumber=%s\n", value);
+    config->task_number = atoi(value);
+
+    for(j=0; i<config->task_number; j++)
+    {
+        fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &config->comp_time, &config->period);
+    }
+
+    fclose(fin);
+
+    return true;
+    }
+
+    fclose(fin);
+    return false;
+}
+
+G_MODULE_EXPORT void
+activate_entry_number_tasks (GtkEntry *entry, gpointer user_data){
+    config->task_number = atoi(gtk_entry_get_text (entry));
+    g_print( "Number of tasks: %d\n", config->task_number);
+}
+
 G_MODULE_EXPORT void
 activate_entry_comp_time (GtkEntry *entry, gpointer user_data){
     config->comp_time = atoi(gtk_entry_get_text (entry));
-    g_print( "Current selected task: %d\n",  config->current_selection);
     g_print( "Computation time: %d\n", config->comp_time);
 }
 
 G_MODULE_EXPORT void
 activate_entry_period (GtkEntry *entry, gpointer user_data){
     config->period = atoi(gtk_entry_get_text (entry));
-    g_print( "Current selected task: %d\n",  config->current_selection);
     g_print( "Computation time: %d\n", config->period);
 }
 
 G_MODULE_EXPORT void
 activate_combo_box_tasks (GtkComboBox *combo_box){
     config->current_selection = gtk_combo_box_get_active (GTK_COMBO_BOX(combo_box));
-    g_print( "Current selected task: %d\n",  config->current_selection);
 }
 
 G_MODULE_EXPORT void
@@ -59,9 +120,15 @@ activate_combo_box_result (GtkComboBox *combo_box){
 G_MODULE_EXPORT void
 activate_config_file_chooser (GtkFileChooserButton *file_chooser_button){
 
-    //TODO: Parse config file and set everything
-    g_print( "Selecting config file\n");
-
+    config->config_file = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_chooser_button));
+    if(load_config_file(config->config_file))
+    {
+        g_print("File has been loaded: %s \n", config->config_file);
+    }
+    else
+    {
+        g_print("Archivo NO cargado: %s \n", config->config_file);
+}
 }
 
 G_MODULE_EXPORT void
@@ -177,6 +244,7 @@ GuiObjects * init_gui(){
     GW( menu_item_help );
 
     /* Connect signals and callbacks */
+    g_signal_connect (gui->entry_number_tasks, "activate", G_CALLBACK (activate_entry_number_tasks), config);
     g_signal_connect (gui->entry_comp_time, "activate", G_CALLBACK (activate_entry_comp_time), config);
     g_signal_connect (gui->entry_period, "activate", G_CALLBACK (activate_entry_period), config);
     g_signal_connect (gui->combo_box_tasks, "changed", G_CALLBACK (activate_combo_box_tasks), config);

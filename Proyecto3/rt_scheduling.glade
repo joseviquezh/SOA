@@ -92,9 +92,9 @@
               <object class="GtkEntry" id="entry_number_tasks">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="text" translatable="yes">6 (fixed max)</property>
+                <property name="text" translatable="yes">0</property>
                 <property name="input_purpose">number</property>
+                <signal name="activate" handler="activate_entry_number_tasks" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -205,7 +205,7 @@
                 <property name="can_focus">False</property>
                 <items>
                   <item id="0" translatable="yes">Show result independtly</item>
-                  <item id="1" translatable="yes">Show result in one slide</item>
+                  <item id="1" translatable="yes">Show results in one slide</item>
                 </items>
                 <signal name="changed" handler="activate_combo_box_result" swapped="no"/>
               </object>

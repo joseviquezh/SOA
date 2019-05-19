@@ -39,6 +39,9 @@ struct _GuiObjects
 };
 
 G_MODULE_EXPORT void
+activate_entry_number_tasks (GtkEntry *entry, gpointer user_data);
+
+G_MODULE_EXPORT void
 activate_entry_comp_time (GtkEntry *entry, gpointer user_data);
 
 G_MODULE_EXPORT void
