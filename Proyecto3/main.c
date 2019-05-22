@@ -7,7 +7,7 @@
 
 // Custom includes
 #include "task.h"
-#include "algorithms/RM.h"
+#include "queue-item.h"
 #include "test/test.h"
 #include "scheduler/scheduler.h"
 
@@ -28,18 +28,18 @@ int main(int argc, char *argv[])
     tasks[1] = (Task) { 2, 1, 3 };
     tasks[2] = (Task) { 3, 1, 6 };*/
 
-    /*int tasks_length = 2;
+    int tasks_length = 2;
     Task * tasks = calloc(tasks_length, sizeof(Task));
     
     tasks[0] = (Task) { 1, 3, 6 };
-    tasks[1] = (Task) { 2, 4, 9 };*/
+    tasks[1] = (Task) { 2, 4, 9 };
 
-    int tasks_length = 3;
+    /*int tasks_length = 3;
     Task * tasks = calloc(tasks_length, sizeof(Task));
     
     tasks[0] = (Task) { 1, 1, 6 };
     tasks[1] = (Task) { 2, 2, 9 };
-    tasks[2] = (Task) { 3, 6, 18 };
+    tasks[2] = (Task) { 3, 6, 18 };*/
 
     printf("\n==========\n");
     printf("i | c | p\n----------\n");
@@ -49,11 +49,25 @@ int main(int argc, char *argv[])
     }
     printf("==========\n\n\n");
 
-    int test_result = TestRM(tasks, tasks_length);
+    int test_result = TestEDF(tasks, tasks_length);
     printf("test_result = %i\n\n\n", test_result);
 
-    InitScheduler(tasks_length, tasks, EDF);
+    InitScheduler(tasks_length, tasks, RM);
     RunScheduling();
+
+    int history_size = GetHistorySize ();
+    int has_deadlines = HasMissedDeadlines ();
+    printf ("history length = %i\n", history_size);
+
+    QueueItem * history = GetHistory ();
+    for (int i = 0; i < history_size; i++) {
+        printf("\n============= Time elapsed %i ==============\n", i);
+        
+        if (!history[i].null) printf("Running task: %i in elapsed_time = %i\n", history[i].task.id, i);
+        else printf("Free period in elapsed_time = %i\n", i);
+
+        printf("===========================================\n\n\n");
+    }
 
     return 0;
 }
