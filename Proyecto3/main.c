@@ -14,11 +14,10 @@
 #include "gui.h"
 
 #define NUM_ALGS 3
+#define NUM_TASKS 3
 
-struct algorithms_data{
+struct algorithms_conf{
     gint task_number;
-    gint comp_time;
-    int period;
     int current_selection;
     int result_format; //0: separate slides, 1: one slide
     bool select[NUM_ALGS];
@@ -28,7 +27,8 @@ struct algorithms_data{
 };
 
 GuiObjects *gui=NULL;
-struct algorithms_data* config;
+struct algorithms_conf* config;
+Task * tasks;
 
 void set_algorithm_select(GtkWidget * wigdet, char value[5]){
 
@@ -47,10 +47,8 @@ bool load_config_file(char* file)
     FILE *fin = fopen(file, "r");
     char str[3];
     int i,j;
-    gint comp_time;
-    gint period;
     if (fin!=NULL){
-    char value[5];
+    char value[5],  comp_time[5], period[5];
     fscanf(fin,"ResultFormat=%s\n", value);
     config->result_format = atoi(value);
     if(strcmp (value, "0")==true){
@@ -68,10 +66,12 @@ bool load_config_file(char* file)
 
     fscanf(fin,"TaskNumber=%s\n", value);
     config->task_number = atoi(value);
+    g_print( "config->task_number: %d\n", config->task_number);
 
-    for(j=0; i<config->task_number; j++)
+    for(j=0; j<config->task_number; j++)
     {
-        fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &config->comp_time, &config->period);
+        fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &tasks[j].computation_time, &tasks[j].period);
+        tasks[j].id = j+1;
     }
 
     fclose(fin);
@@ -91,14 +91,14 @@ activate_entry_number_tasks (GtkEntry *entry, gpointer user_data){
 
 G_MODULE_EXPORT void
 activate_entry_comp_time (GtkEntry *entry, gpointer user_data){
-    config->comp_time = atoi(gtk_entry_get_text (entry));
-    g_print( "Computation time: %d\n", config->comp_time);
+    tasks[config->current_selection].computation_time = atoi(gtk_entry_get_text (entry));
+    g_print( "Computation time: %d\n", tasks[config->current_selection].computation_time);
 }
 
 G_MODULE_EXPORT void
 activate_entry_period (GtkEntry *entry, gpointer user_data){
-    config->period = atoi(gtk_entry_get_text (entry));
-    g_print( "Computation time: %d\n", config->period);
+    tasks[config->current_selection].period = atoi(gtk_entry_get_text (entry));
+    g_print( "Computation time: %d\n", tasks[config->current_selection].period);
 }
 
 G_MODULE_EXPORT void
@@ -173,10 +173,36 @@ toggle_check_select_llf (GtkToggleButton *toggle_button){
 G_MODULE_EXPORT void
 execute_button_clicked (GtkButton *button)
 {
-    //TODO: Add function body to start the algorithms execution according
-    //to GUI configuration
+    g_print( "\nExecuting Selected Algorithms\n");
 
-    g_print( "Executing Selected Algorithms\n");
+    printf("\n==========\n");
+    printf("i | c | p\n----------\n");
+    for (int i = 0; i < config->task_number; i++) {
+        Task task = tasks[i];
+        printf("%i | %i | %i\n", task.id, task.computation_time, task.period);
+    }
+    printf("==========\n\n\n");
+
+    int test_result = TestEDF(tasks, config->task_number);
+    printf("test_result = %i\n\n\n", test_result);
+
+    InitScheduler(config->task_number, tasks, RM);
+    RunScheduling();
+
+    int history_size = GetHistorySize ();
+    int has_deadlines = HasMissedDeadlines ();
+    printf ("history length = %i\n", history_size);
+
+    /* Get results post execution */
+    QueueItem * history = GetHistory ();
+    for (int i = 0; i < history_size; i++) {
+        printf("\n============= Time elapsed %i ==============\n", i);
+
+        if (!history[i].null) printf("Running task: %i in elapsed_time = %i\n", history[i].task.id, i);
+        else printf("Free period in elapsed_time = %i\n", i);
+
+        printf("===========================================\n\n\n");
+    }
 
 }
 
@@ -267,6 +293,8 @@ GuiObjects * init_gui(){
 int main(int argc, char *argv[])
 {
 
+    tasks = calloc(NUM_TASKS, sizeof(Task));
+
 //----------------------------------------------------
     config = malloc(sizeof(*config));
 
@@ -286,6 +314,8 @@ int main(int argc, char *argv[])
 
     /* Free any allocated data */
     g_slice_free(GuiObjects, gui);
+    free(config);
+    free(tasks);
 //----------------------------------------------------
 
     /*int tasks_length = 6;
@@ -302,46 +332,12 @@ int main(int argc, char *argv[])
     tasks[1] = (Task) { 2, 1, 3 };
     tasks[2] = (Task) { 3, 1, 6 };*/
 
-    int tasks_length = 2;
-    Task * tasks = calloc(tasks_length, sizeof(Task));
-
-    tasks[0] = (Task) { 1, 3, 6 };
-    tasks[1] = (Task) { 2, 4, 9 };
-
     /*int tasks_length = 3;
     Task * tasks = calloc(tasks_length, sizeof(Task));
 
     tasks[0] = (Task) { 1, 1, 6 };
     tasks[1] = (Task) { 2, 2, 9 };
     tasks[2] = (Task) { 3, 6, 18 };*/
-
-    printf("\n==========\n");
-    printf("i | c | p\n----------\n");
-    for (int i = 0; i < tasks_length; i++) {
-        Task task = tasks[i];
-        printf("%i | %i | %i\n", task.id, task.period, task.computation_time);
-    }
-    printf("==========\n\n\n");
-
-    int test_result = TestLLF(tasks, tasks_length);
-    printf("test_result = %i\n\n\n", test_result);
-
-    InitScheduler(tasks_length, tasks, LLF);
-    RunScheduling();
-
-    int history_size = GetHistorySize ();
-    int has_deadlines = HasMissedDeadlines ();
-    printf ("history length = %i\n", history_size);
-
-    QueueItem * history = GetHistory ();
-    for (int i = 0; i < history_size; i++) {
-        printf("\n============= Time elapsed %i ==============\n", i);
-
-        if (!history[i].null) printf("Running task: %i in elapsed_time = %i\n", history[i].task.id, i);
-        else printf("Free period in elapsed_time = %i\n", i);
-
-        printf("===========================================\n\n\n");
-    }
 
     return 0;
 }
