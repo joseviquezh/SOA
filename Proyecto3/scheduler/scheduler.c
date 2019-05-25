@@ -25,6 +25,8 @@ int deadline_missed_flag;
 
 int algorithm;
 
+int mcm;
+
 // -----------
 // Helpers
 // ----------
@@ -133,6 +135,18 @@ void CheckForDeadlines () {
     //if (deadline_missed_flag > 0) deadline_missed_flag = deadline_missed_flag / 2;
 }
 
+int CalculateGcd(int a, int b){
+  if(b == 0){
+    return a;
+  }
+  return CalculateGcd(b, a % b);
+}
+
+int CalculateMcm(int a, int b){
+  int gcd = CalculateGcd(a, b);
+  return (a * b)/gcd;
+}
+
 void AddTasksToQueue () {
     int total_added = 0;
     for (int i = 0; i < total_tasks; i++) {
@@ -143,7 +157,8 @@ void AddTasksToQueue () {
         }
     }
 
-    if (total_added == total_tasks) end_flag = 1;
+    // if (total_added == total_tasks) end_flag = 1;
+    if (elapsed_time ==  mcm) end_flag = 1;
 
     CheckForDeadlines ();
 }
@@ -184,6 +199,14 @@ int GetHistorySize () {
 
 
 int RunScheduling () {
+    // Calculate the MCM between the periods of all the tasks
+    mcm = 1;
+    for (int i = 0; i < total_tasks; i++) {
+        mcm = CalculateMcm(tasks[i].period, mcm);
+    }
+
+    printf("The mcm between the periods is %d", mcm);
+
     while (end_flag == 0 && deadline_missed_flag == 0) {
 
         elapsed_time += 1;
