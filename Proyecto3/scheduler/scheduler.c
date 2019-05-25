@@ -79,6 +79,8 @@ void SortReadyQueue () {
             break;
         case EDF:
             EDFSortReadyQueue(ready_queue, current_items_in_queue);
+        case LLF:
+            LLFSortReadyQueue(ready_queue, current_items_in_queue);
         default:
             break;
     }

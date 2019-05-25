@@ -11,7 +11,7 @@ double CalculateMiu (Task * tasks, int tasks_length) {
     double result = 0;
     for (int i = 0; i < tasks_length; i++) {
         Task task = tasks[i];
-        result += (double) task.computation_time / (double) task.period; 
+        result += (double) task.computation_time / (double) task.period;
     }
 
     return result;
@@ -25,7 +25,7 @@ double CalculateMaxUtilizationEDF () {
     return 1;
 }
 
-// Main tests   
+// Main tests
 int TestRM (Task * tasks, int tasks_length) {
     double miu = CalculateMiu (tasks, tasks_length);
     double max_utilization = (double)tasks_length * (pow(2, 1 / (double)tasks_length) - 1);
@@ -41,3 +41,6 @@ int TestEDF (Task * tasks, int tasks_length) {
     return miu <= CalculateMaxUtilizationEDF();
 }
 
+int TestLLF (Task * tasks, int tasks_length) {
+    return TestEDF (tasks, tasks_length);
+}
