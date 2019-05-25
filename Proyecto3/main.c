@@ -30,13 +30,22 @@ GuiObjects *gui=NULL;
 struct algorithms_conf* config;
 Task * tasks;
 
-void set_algorithm_select(GtkWidget * wigdet, char value[5]){
+/*Wrapper: Executes particular algorithm, returns history of execution*/
+QueueItem * execute_algorithm(int algorithm, int * size) {
+    InitScheduler(config->task_number, tasks, algorithm);
+    RunScheduling();
+    *size = GetHistorySize ();
 
-    if(strcmp (value, "false")==true){
+    return GetHistory ();
+}
+
+void set_algorithm_select(GtkWidget * wigdet, int value){
+
+    if(value == false){
         config->select[0] = false;
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), false);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), 0);
     }
-    else{
+    else if (value == 1){
         config->select[0] = true;
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), true);
     }
@@ -50,35 +59,40 @@ bool load_config_file(char* file)
     char str[3];
     int i,j;
     if (fin!=NULL){
-    char value[5],  comp_time[5], period[5];
-    fscanf(fin,"ResultFormat=%s\n", value);
-    config->result_format = atoi(value);
-    if(strcmp (value, "0")==true){
-        gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 0);
-    }
-    else{
-        gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 1);
-    }
-    fscanf(fin,"RM=%s\n", value);
-    set_algorithm_select(gui->check_select_rm, value);
-    fscanf(fin,"EDF=%s\n", value);
-    set_algorithm_select(gui->check_select_edf, value);
-    fscanf(fin,"LLF=%s\n", value);
-    set_algorithm_select(gui->check_select_llf, value);
+        int value;
+        fscanf(fin,"ResultFormat=%d\n", &value);
+        config->result_format = value;
+        if(value == 0){
+            gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 0);
+        }
+        else if (value == 1){
+            gtk_combo_box_set_active (GTK_COMBO_BOX (gui->combo_box_result), 1);
+        }
 
-    fscanf(fin,"TaskNumber=%s\n", value);
-    config->task_number = atoi(value);
-    g_print( "config->task_number: %d\n", config->task_number);
+        fscanf(fin,"RM=%d\n", &value);
+        set_algorithm_select(gui->check_select_rm, value);
+        config->select[0] = value;
 
-    for(j=0; j<config->task_number; j++)
-    {
-        fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &tasks[j].computation_time, &tasks[j].period);
-        tasks[j].id = j+1;
-    }
+        fscanf(fin,"EDF=%d\n", &value);
+        set_algorithm_select(gui->check_select_edf, value);
+        config->select[1] = value;
 
-    fclose(fin);
+        fscanf(fin,"LLF=%d\n", &value);
+        set_algorithm_select(gui->check_select_llf, value);
+        config->select[2] = value;
 
-    return true;
+        fscanf(fin,"TaskNumber=%d\n", &value);
+        config->task_number = value;
+
+        for(j=0; j<config->task_number; j++)
+        {
+            fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &tasks[j].computation_time, &tasks[j].period);
+            //~ tasks[j].id = j+1;
+        }
+
+        fclose(fin);
+
+        return true;
     }
 
     fclose(fin);
@@ -106,6 +120,7 @@ activate_entry_period (GtkEntry *entry, gpointer user_data){
 G_MODULE_EXPORT void
 activate_combo_box_tasks (GtkComboBox *combo_box){
     config->current_selection = gtk_combo_box_get_active (GTK_COMBO_BOX(combo_box));
+    g_print( "Current selection: %d\n", config->current_selection);
 }
 
 G_MODULE_EXPORT void
@@ -137,11 +152,11 @@ G_MODULE_EXPORT void
 toggle_check_select_rm (GtkToggleButton *toggle_button){
 
     config->select[0] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(toggle_button));
-    if (!config->select[0]){
+    if (config->select[0] == FALSE){
         g_print( "Deselected Rate Monotonic\n");
     }
     else {
-        //TODO: Parse config file and set everything
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(toggle_button), 1);
         g_print( "Selected Rate Monotonic\n");
     }
 }
@@ -154,7 +169,6 @@ toggle_check_select_edf (GtkToggleButton *toggle_button){
         g_print( "Deselected Earliest Deadline First\n");
     }
     else {
-        //TODO: Parse config file and set everything
         g_print( "Selected Earliest Deadline First\n");
     }
 }
@@ -167,7 +181,6 @@ toggle_check_select_llf (GtkToggleButton *toggle_button){
         g_print( "Deselected Least Laxity First\n");
     }
     else {
-        //TODO: Parse config file and set everything
         g_print( "Selected Least Laxity First\n");
     }
 }
@@ -185,27 +198,71 @@ execute_button_clicked (GtkButton *button)
     }
     printf("==========\n\n\n");
 
-    int test_result = TestEDF(tasks, config->task_number);
-    printf("test_result = %i\n\n\n", test_result);
-
-    InitScheduler(config->task_number, tasks, RM);
-    RunScheduling();
-
-    int history_size = GetHistorySize ();
-    int has_deadlines = HasMissedDeadlines ();
-    printf ("history length = %i\n", history_size);
-
-    /* Get results post execution */
-    QueueItem * history = GetHistory ();
-    for (int i = 0; i < history_size; i++) {
-        printf("\n============= Time elapsed %i ==============\n", i);
-
-        if (!history[i].null) printf("Running task: %i in elapsed_time = %i\n", history[i].task.id, i);
-        else printf("Free period in elapsed_time = %i\n", i);
-
-        printf("===========================================\n\n\n");
+    for(int j=0; j<config->task_number; j++)
+    {
+        tasks[j].id = j+1;
     }
 
+    gboolean execute_rm = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->check_select_rm));
+    gboolean execute_edf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->check_select_edf));
+    gboolean execute_llf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->check_select_llf));
+
+    if (execute_rm == TRUE){
+        int size_result_rm;
+        int test_result = TestRM(tasks, config->task_number);
+        printf("test_result = %i\n\n\n", test_result);
+        if (test_result == 1){
+            gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"PASSED");
+        }
+        else{
+             gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
+        }
+        QueueItem * result_rm = execute_algorithm(RM, &size_result_rm);
+            for (int i = 0; i < 8; i++) {
+            printf("\n============= Time elapsed %i ==============\n", i);
+            if (!result_rm[i].null) printf("Running task: %i in elapsed_time = %i\n", result_rm[i].task.id, i);
+            else printf("Free period in elapsed_time = %i\n", i);
+            printf("===========================================\n\n\n");
+        }
+    }
+
+    if (execute_edf == TRUE){
+        int size_result_edf;
+        int test_result = TestEDF(tasks, config->task_number);
+        printf("test_result = %i\n\n\n", test_result);
+        if (test_result == 1){
+            gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"PASSED");
+        }
+        else{
+             gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"FAILED");
+        }
+        QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf);
+            for (int i = 0; i < size_result_edf; i++) {
+            printf("\n============= Time elapsed %i ==============\n", i);
+            if (!result_edf[i].null) printf("Running task: %i in elapsed_time = %i\n", result_edf[i].task.id, i);
+            else printf("Free period in elapsed_time = %i\n", i);
+            printf("===========================================\n\n\n");
+        }
+    }
+
+    if (execute_llf == TRUE){
+        int size_result_llf;
+        int test_result = TestLLF(tasks, config->task_number);
+        printf("test_result = %i\n\n\n", test_result);
+        if (test_result == 1){
+            gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"PASSED");
+        }
+        else{
+             gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"FAILED");
+        }
+        QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf);
+            for (int i = 0; i < size_result_llf; i++) {
+            printf("\n============= Time elapsed %i ==============\n", i);
+            if (!result_llf[i].null) printf("Running task: %i in elapsed_time = %i\n", result_llf[i].task.id, i);
+            else printf("Free period in elapsed_time = %i\n", i);
+            printf("===========================================\n\n\n");
+        }
+    }
 }
 
 G_MODULE_EXPORT void
@@ -308,8 +365,6 @@ int main(int argc, char *argv[])
 
     /*Set the GtkWindow to appear*/
     gtk_widget_show(gui->main_window);
-
-    g_print( "DEBUG\n");
 
     /* Main Gtk loop */
     gtk_main();
