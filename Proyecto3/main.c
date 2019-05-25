@@ -40,6 +40,8 @@ void set_algorithm_select(GtkWidget * wigdet, char value[5]){
         config->select[0] = true;
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(wigdet), true);
     }
+    /*Set check boxes sensitivity to false (not able to interact after)*/
+    gtk_widget_set_sensitive (GTK_WIDGET(wigdet), false);
 }
 
 bool load_config_file(char* file)
