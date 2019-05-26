@@ -12,6 +12,7 @@
 #include "test/test.h"
 #include "scheduler/scheduler.h"
 #include "gui.h"
+#include "writer.h"
 
 #define NUM_ALGS 3
 #define NUM_TASKS 6
@@ -186,17 +187,23 @@ toggle_check_select_llf (GtkToggleButton *toggle_button){
 G_MODULE_EXPORT void
 execute_button_clicked (GtkButton *button)
 {
+    BeamerPresentation* presentation=beamerBuilder();
+    char * new_str;
+    char str[10];
+    char task_list[6][8]={"Task 1","Task 2","Task 3","Task 4","Task 5","Task 6"};
+    int n = config->task_number;
+
     g_print( "\nExecuting Selected Algorithms\n");
 
     printf("\n==========\n");
     printf("i | c | p\n----------\n");
-    for (int i = 0; i < config->task_number; i++) {
+    for (int i = 0; i < n; i++) {
         Task task = tasks[i];
         printf("%i | %i | %i\n", task.id, task.computation_time, task.period);
     }
     printf("==========\n\n\n");
 
-    for(int j=0; j<config->task_number; j++)
+    for(int j=0; j<n; j++)
     {
         tasks[j].id = j+1;
     }
@@ -205,61 +212,127 @@ execute_button_clicked (GtkButton *button)
     gboolean execute_edf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->check_select_edf));
     gboolean execute_llf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->check_select_llf));
 
-    if (execute_rm == TRUE){
-        int size_result_rm;
-        int test_result = TestRM(tasks, config->task_number);
-        printf("test_result = %i\n\n\n", test_result);
-        if (test_result == 1){
-            gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"PASSED");
-        }
-        else{
-             gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
-        }
-        QueueItem * result_rm = execute_algorithm(RM, &size_result_rm);
+    if (config->result_format == 0){
+        if (execute_rm == TRUE){
+            int size_result_rm;
+            int test_result = TestRM(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
+            }
+            QueueItem * result_rm = execute_algorithm(RM, &size_result_rm);
+
+            insertNewAlgorithm(presentation,"Results RM",20);
+
+            for (int i = 0; i < n; i++) {
+                insertNewTask(presentation,"Results RM", task_list[i]);
+            }
+
             for (int i = 0; i < size_result_rm; i++) {
-            printf("\n============= Time elapsed %i ==============\n", i);
-            if (!result_rm[i].null) printf("Running task: %i in elapsed_time = %i\n", result_rm[i].task.id, i);
-            else printf("Free period in elapsed_time = %i\n", i);
-            printf("===========================================\n\n\n");
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_rm[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_rm[i].task.id, i+1);
+                    int index;
+                    index = result_rm[i].task.id-1;
+                    printf("index: %d\n", index);
+                    char *task_id = malloc(sizeof(task_list[index]));
+                    strcpy(task_id,task_list[index]);
+                    printf("task_id: %s\n", task_id);
+                    insertNewRange(presentation,"Results RM", task_id, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
         }
-    }
 
-    if (execute_edf == TRUE){
-        int size_result_edf;
-        int test_result = TestEDF(tasks, config->task_number);
-        printf("test_result = %i\n\n\n", test_result);
-        if (test_result == 1){
-            gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"PASSED");
-        }
-        else{
-             gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"FAILED");
-        }
-        QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf);
+        if (execute_edf == TRUE){
+            int size_result_edf;
+            int test_result = TestEDF(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"FAILED");
+            }
+            QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf);
+
+            insertNewAlgorithm(presentation,"Results EDF",20);
+
+            for (int i = 0; i < n; i++) {
+                insertNewTask(presentation,"Results EDF", task_list[i]);
+            }
+
             for (int i = 0; i < size_result_edf; i++) {
-            printf("\n============= Time elapsed %i ==============\n", i);
-            if (!result_edf[i].null) printf("Running task: %i in elapsed_time = %i\n", result_edf[i].task.id, i);
-            else printf("Free period in elapsed_time = %i\n", i);
-            printf("===========================================\n\n\n");
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_edf[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_edf[i].task.id, i+1);
+                    int index;
+                    index = result_edf[i].task.id-1;
+                    printf("index: %d\n", index);
+                    char *task_id = malloc(sizeof(task_list[index]));
+                    strcpy(task_id,task_list[index]);
+                    printf("task_id: %s\n", task_id);
+                    insertNewRange(presentation,"Results EDF", task_id, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
         }
+
+        if (execute_llf == TRUE){
+            int size_result_llf;
+            int test_result = TestLLF(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"FAILED");
+            }
+            QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf);
+
+            insertNewAlgorithm(presentation,"Results LLF",20);
+
+            for (int i = 0; i < n; i++) {
+                insertNewTask(presentation,"Results LLF", task_list[i]);
+            }
+
+            for (int i = 0; i < size_result_llf; i++) {
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_llf[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_llf[i].task.id, i+1);
+                    int index;
+                    index = result_llf[i].task.id-1;
+                    printf("index: %d\n", index);
+                    char *task_id = malloc(sizeof(task_list[index]));
+                    strcpy(task_id,task_list[index]);
+                    printf("task_id: %s\n", task_id);
+                    insertNewRange(presentation,"Results LLF", task_id, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
+        }
+
+        generateLatexForBeamer(presentation);
+        system("pdflatex main.tex");
+        system("evince main.pdf");
+        free(presentation);
     }
 
-    if (execute_llf == TRUE){
-        int size_result_llf;
-        int test_result = TestLLF(tasks, config->task_number);
-        printf("test_result = %i\n\n\n", test_result);
-        if (test_result == 1){
-            gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"PASSED");
-        }
-        else{
-             gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"FAILED");
-        }
-        QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf);
-            for (int i = 0; i < size_result_llf; i++) {
-            printf("\n============= Time elapsed %i ==============\n", i);
-            if (!result_llf[i].null) printf("Running task: %i in elapsed_time = %i\n", result_llf[i].task.id, i);
-            else printf("Free period in elapsed_time = %i\n", i);
-            printf("===========================================\n\n\n");
-        }
+    else {
+    //TODO: Logic to generate beamer with all algorithms in one slide
+        printf("WORK IN PROGRESS\n");
     }
 }
 
