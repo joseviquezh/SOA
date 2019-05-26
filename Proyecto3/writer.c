@@ -256,7 +256,7 @@ char * generateLatexForRange(Range * range){
     char str[10];
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
     if(range->start<0&&range->end<0){
-        result=str_replace(extraLine,"<color>","gray");
+        result=str_replace(extraLine,"<color>","yellow!20, draw=none");
         sprintf(str, "%d", range->start*-1);
         result=str_replace(result,"<start>",str);
         sprintf(str, "%d", range->end*-1);
