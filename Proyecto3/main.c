@@ -351,8 +351,6 @@ int main(int argc, char *argv[])
 {
 
     tasks = calloc(NUM_TASKS, sizeof(Task));
-
-//----------------------------------------------------
     config = malloc(sizeof(*config));
 
     /* Init GTK+ */
@@ -371,28 +369,6 @@ int main(int argc, char *argv[])
     g_slice_free(GuiObjects, gui);
     free(config);
     free(tasks);
-//----------------------------------------------------
-
-    /*int tasks_length = 6;
-    Task * tasks = calloc(tasks_length, sizeof(Task));
-
-    for (int i = 0; i < tasks_length; i++) {
-        tasks[i] = (Task) { i + 1, (i + 2) * 2 };;
-    }*/
-
-    /*int tasks_length = 3;
-    Task * tasks = calloc(tasks_length, sizeof(Task));
-
-    tasks[0] = (Task) { 1, 1, 2 };
-    tasks[1] = (Task) { 2, 1, 3 };
-    tasks[2] = (Task) { 3, 1, 6 };*/
-
-    /*int tasks_length = 3;
-    Task * tasks = calloc(tasks_length, sizeof(Task));
-
-    tasks[0] = (Task) { 1, 1, 6 };
-    tasks[1] = (Task) { 2, 2, 9 };
-    tasks[2] = (Task) { 3, 6, 18 };*/
 
     return 0;
 }

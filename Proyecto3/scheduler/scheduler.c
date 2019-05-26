@@ -131,8 +131,6 @@ void CheckForDeadlines () {
             if (task_i.id == task_j.id && i != j) deadline_missed_flag += 1;
         }
     }
-
-    //if (deadline_missed_flag > 0) deadline_missed_flag = deadline_missed_flag / 2;
 }
 
 int CalculateGcd(int a, int b){
@@ -212,18 +210,6 @@ int RunScheduling () {
         elapsed_time += 1;
         ApplyAdvancedToQueue();
         SortReadyQueue();
-
-        /*printf("\n============= Time elapsed %i ==============\n", elapsed_time);
-
-        if (!history[history_size - 1].null) printf("Running task: %i in elapsed_time = %i\n", history[history_size - 1].task.id, elapsed_time);
-        else printf("Free period in elapsed_time = %i\n", elapsed_time);
-
-        printf("\n--------\nReady Queue\n--------\n");
-        for (int i = 0; i < current_items_in_queue; i++) {
-            printf("id = %i, priority = %i, remaining_periods = %i, arrival_time = %i\n", ready_queue[i].task.id, ready_queue[i].priority, ready_queue[i].remaining_periods, ready_queue[i].arrival_time);
-        }
-        printf("--------\n");
-        printf("===========================================\n\n\n");*/
     }
 
     printf("\nend_flag = %i, deadline_flag = %i\n\n", end_flag, deadline_missed_flag);
