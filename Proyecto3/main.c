@@ -32,10 +32,11 @@ struct algorithms_conf* config;
 Task * tasks;
 
 /*Wrapper: Executes particular algorithm, returns history of execution*/
-QueueItem * execute_algorithm(int algorithm, int * size) {
+QueueItem * execute_algorithm(int algorithm, int * size, int *mcm) {
     InitScheduler(config->task_number, tasks, algorithm);
     RunScheduling();
     *size = GetHistorySize ();
+    *mcm = GetMcm ();
 
     return GetHistory ();
 }
@@ -215,6 +216,7 @@ execute_button_clicked (GtkButton *button)
     if (config->result_format == 0){
         if (execute_rm == TRUE){
             int size_result_rm;
+            int mcm;
             int test_result = TestRM(tasks, n);
             printf("test_result = %i\n\n\n", test_result);
             if (test_result == 1){
@@ -223,9 +225,10 @@ execute_button_clicked (GtkButton *button)
             else{
                 gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
             }
-            QueueItem * result_rm = execute_algorithm(RM, &size_result_rm);
+            QueueItem * result_rm = execute_algorithm(RM, &size_result_rm, &mcm);
 
-            insertNewAlgorithm(presentation,"Results RM",20);
+            printf("mcm: %d\n\n\n\n", mcm);
+            insertNewAlgorithm(presentation,"Results RM", mcm);
 
             for (int i = 0; i < n; i++) {
                 insertNewTask(presentation,"Results RM", task_list[i]);
@@ -252,6 +255,7 @@ execute_button_clicked (GtkButton *button)
 
         if (execute_edf == TRUE){
             int size_result_edf;
+            int mcm;
             int test_result = TestEDF(tasks, n);
             printf("test_result = %i\n\n\n", test_result);
             if (test_result == 1){
@@ -260,9 +264,9 @@ execute_button_clicked (GtkButton *button)
             else{
                 gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"FAILED");
             }
-            QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf);
+            QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf, &mcm);
 
-            insertNewAlgorithm(presentation,"Results EDF",20);
+            insertNewAlgorithm(presentation,"Results EDF",mcm);
 
             for (int i = 0; i < n; i++) {
                 insertNewTask(presentation,"Results EDF", task_list[i]);
@@ -289,6 +293,7 @@ execute_button_clicked (GtkButton *button)
 
         if (execute_llf == TRUE){
             int size_result_llf;
+            int mcm;
             int test_result = TestLLF(tasks, n);
             printf("test_result = %i\n\n\n", test_result);
             if (test_result == 1){
@@ -297,9 +302,9 @@ execute_button_clicked (GtkButton *button)
             else{
                 gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"FAILED");
             }
-            QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf);
+            QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf, &mcm);
 
-            insertNewAlgorithm(presentation,"Results LLF",20);
+            insertNewAlgorithm(presentation,"Results LLF",mcm);
 
             for (int i = 0; i < n; i++) {
                 insertNewTask(presentation,"Results LLF", task_list[i]);

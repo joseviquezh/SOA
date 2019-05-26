@@ -195,6 +195,9 @@ int GetHistorySize () {
     return history_size;
 }
 
+int GetMcm () {
+    return mcm;
+}
 
 int RunScheduling () {
     // Calculate the MCM between the periods of all the tasks

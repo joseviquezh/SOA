@@ -9,4 +9,5 @@ int RunScheduling ();
 
 QueueItem * GetHistory ();
 int GetHistorySize ();
+int GetMcm ();
 int HasMissedDeadlines ();
