@@ -216,7 +216,7 @@ execute_button_clicked (GtkButton *button)
              gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
         }
         QueueItem * result_rm = execute_algorithm(RM, &size_result_rm);
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < size_result_rm; i++) {
             printf("\n============= Time elapsed %i ==============\n", i);
             if (!result_rm[i].null) printf("Running task: %i in elapsed_time = %i\n", result_rm[i].task.id, i);
             else printf("Free period in elapsed_time = %i\n", i);
