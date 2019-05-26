@@ -14,7 +14,7 @@
 #include "gui.h"
 
 #define NUM_ALGS 3
-#define NUM_TASKS 3
+#define NUM_TASKS 6
 
 struct algorithms_conf{
     gint task_number;
@@ -56,7 +56,6 @@ void set_algorithm_select(GtkWidget * wigdet, int value){
 bool load_config_file(char* file)
 {
     FILE *fin = fopen(file, "r");
-    char str[3];
     int i,j;
     if (fin!=NULL){
         int value;
@@ -87,7 +86,6 @@ bool load_config_file(char* file)
         for(j=0; j<config->task_number; j++)
         {
             fscanf(fin,"{ComputationTime=%d, Period=%d}\n", &tasks[j].computation_time, &tasks[j].period);
-            //~ tasks[j].id = j+1;
         }
 
         fclose(fin);
