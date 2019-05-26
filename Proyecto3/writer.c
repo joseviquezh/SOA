@@ -1,36 +1,36 @@
-#include "Writer.h"
+#include "writer.h"
 
 
 
 
-Range * rangeBuilder(int start,int end){ 
+Range * rangeBuilder(int start,int end){
  Range* node=(Range*) malloc(sizeof (Range));
  node->start=start;
  node->end=end;
  node->next=NULL;
  return node;
 }
-Task * taskBuilder(char * name, Range* listOfRanges){
- Task* node=(Task*) malloc(sizeof (Task));
+TaskBeamer * taskBuilder(char * name, Range* listOfRanges){
+ TaskBeamer* node=(TaskBeamer*) malloc(sizeof (TaskBeamer));
  strcpy(node->title,name);
  node->listOfRanges=listOfRanges;
  node->next=NULL;
- return node;    
+ return node;
 }
 
-Algorithm * algorithmBuilder(char * name, int totalTime, Task* listOfTasks){
+Algorithm * algorithmBuilder(char * name, int totalTime, TaskBeamer* listOfTasks){
  Algorithm* node=(Algorithm*) malloc(sizeof (Algorithm));
  strcpy(node->name,name);
  node->listOfTasks=listOfTasks;
  node->totalTime=totalTime;
  node->next=NULL;
- return node;    
+ return node;
 }
 
 BeamerPresentation * beamerBuilder(){
     BeamerPresentation* node=(BeamerPresentation*) malloc(sizeof (BeamerPresentation));
     node->listOfAlgorithms=NULL;
-    return node;    
+    return node;
 }
 
 Range * addRangeToList(int start,int end, Range* listOfRanges){
@@ -38,7 +38,7 @@ Range * addRangeToList(int start,int end, Range* listOfRanges){
   {
     listOfRanges=rangeBuilder(start,end);
     return listOfRanges;
-  }   
+  }
   Range* cursor=listOfRanges;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -47,13 +47,13 @@ Range * addRangeToList(int start,int end, Range* listOfRanges){
   return cursor->next;
 }
 
-Task * addTaskToList(char * name, Range * listOfRanges, Task* listOfTasks){
+TaskBeamer * addTaskToList(char * name, Range * listOfRanges, TaskBeamer* listOfTasks){
   if(listOfTasks==NULL)
   {
     listOfTasks=taskBuilder(name,listOfRanges);
     return listOfTasks;
-  } 
-  Task* cursor=listOfTasks;
+  }
+  TaskBeamer* cursor=listOfTasks;
   while(cursor->next!=NULL){
       cursor=cursor->next;
   }
@@ -61,12 +61,12 @@ Task * addTaskToList(char * name, Range * listOfRanges, Task* listOfTasks){
   return cursor->next;
 }
 
-Algorithm * addAlgorithmToList(char * name,int totalTime, Task* listOfTasks, Algorithm* listOfAlgorithms){
+Algorithm * addAlgorithmToList(char * name,int totalTime, TaskBeamer* listOfTasks, Algorithm* listOfAlgorithms){
   if(listOfAlgorithms==NULL)
   {
     listOfAlgorithms=algorithmBuilder(name, totalTime,listOfTasks);
     return listOfAlgorithms;
-  } 
+  }
   Algorithm* cursor=listOfAlgorithms;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -137,29 +137,29 @@ char* getFullTextFromFile(char* fileName){
     /* Get the number of bytes */
     fseek(infile, 0L, SEEK_END);
     numbytes = ftell(infile);
-    
-    /* reset the file position indicator to 
+
+    /* reset the file position indicator to
     the beginning of the file */
-    fseek(infile, 0L, SEEK_SET);	
-    
-    /* grab sufficient memory for the 
+    fseek(infile, 0L, SEEK_SET);
+
+    /* grab sufficient memory for the
     buffer to hold the text */
-    buffer = (char*)calloc(numbytes, sizeof(char));	
-    
+    buffer = (char*)calloc(numbytes, sizeof(char));
+
     /* memory error */
     if(buffer == NULL)
         return NULL;
-    
+
     /* copy all the text into the buffer */
     fread(buffer, sizeof(char), numbytes, infile);
     fclose(infile);
-    
+
     return buffer;
 }
 
 
 void writeFile(char* fileName, char* content){
-    // Open a file for writing. 
+    // Open a file for writing.
     // (This will replace any existing file. Use "w+" for appending)
     FILE *file = fopen(fileName, "w");
     int results = fputs(content, file);
@@ -183,8 +183,8 @@ Algorithm* pickAlgorithmByName(BeamerPresentation*presentation, char* nameOfAlgo
     }
     return NULL;
 }
-Task* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
-    Task* cursor=algorithm->listOfTasks;
+TaskBeamer* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
+    TaskBeamer* cursor=algorithm->listOfTasks;
     while(cursor!=NULL){
         if(strcmp(cursor->title,nameOfTask)==0){
             return  cursor;
@@ -198,29 +198,29 @@ Task* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
 
 void insertNewSequenceRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int cTime,int period,int max){
     Algorithm* algorithm=pickAlgorithmByName(presentation,algorithmName);
-    Task* task=pickTaskByName(algorithm,taskName);
+    TaskBeamer* task_beamer=pickTaskByName(algorithm,taskName);
     int indicator=period;
     while (indicator+cTime<max)
     {
-        if(task->listOfRanges==NULL){
-             task->listOfRanges=rangeBuilder(indicator,indicator+cTime);
+        if(task_beamer->listOfRanges==NULL){
+             task_beamer->listOfRanges=rangeBuilder(indicator,indicator+cTime);
         }else{
-             addRangeToList(indicator,indicator+cTime,task->listOfRanges);
-        }   
+             addRangeToList(indicator,indicator+cTime,task_beamer->listOfRanges);
+        }
         indicator+=period;
     }
-    
-    
+
+
 }
 
 
 void insertNewRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int start,int end){
     Algorithm* algorithm=pickAlgorithmByName(presentation,algorithmName);
-    Task* task=pickTaskByName(algorithm,taskName);
-    if(task->listOfRanges==NULL){
-        task->listOfRanges=rangeBuilder(start,end);
+    TaskBeamer* task_beamer=pickTaskByName(algorithm,taskName);
+    if(task_beamer->listOfRanges==NULL){
+        task_beamer->listOfRanges=rangeBuilder(start,end);
     }else{
-        addRangeToList(start,end,task->listOfRanges);
+        addRangeToList(start,end,task_beamer->listOfRanges);
     }
 }
 
@@ -257,36 +257,36 @@ char * generateLatexForRange(Range * range){
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
     if(range->start<0&&range->end<0){
         result=str_replace(extraLine,"<color>","gray");
-        sprintf(str, "%d", range->start*-1);    
+        sprintf(str, "%d", range->start*-1);
         result=str_replace(result,"<start>",str);
-        sprintf(str, "%d", range->end*-1); 
+        sprintf(str, "%d", range->end*-1);
         result=str_replace(result,"<end>",str);
     }
     else{
         result=str_replace(extraLine,"<color>","aclv");
-        sprintf(str, "%d", range->start);    
+        sprintf(str, "%d", range->start);
         result=str_replace(result,"<start>",str);
-        sprintf(str, "%d", range->end); 
+        sprintf(str, "%d", range->end);
         result=str_replace(result,"<end>",str);
     }
     return result;
 }
 
 int getRandomRGBValue(){
-    int r = rand(); 
+    int r = rand();
     return r%256;
 }
 
-char * generateLatexForTask(Task*task){
+char * generateLatexForTask(TaskBeamer*task_beamer){
     char * result;
     char str[10];
     char * mainLine="\\definecolor{aclv}{RGB}{<red>,<green>,<blue>}  \\ganttbar[ bar/.append style={fill=<color>}]{<task_name>}{<start>}{<end>}";
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
-    
+
     result=str_replace(mainLine,"<color>","aclv");
 
 
-    sprintf(str, "%d", getRandomRGBValue());    
+    sprintf(str, "%d", getRandomRGBValue());
     result=str_replace(result,"<red>",str);
 
     sprintf(str, "%d", getRandomRGBValue());
@@ -296,14 +296,14 @@ char * generateLatexForTask(Task*task){
     sprintf(str, "%d", getRandomRGBValue());
     result=str_replace(result,"<blue>",str);
 
-    result=str_replace(result,"<task_name>",task->title);
-   
-    sprintf(str, "%d", task->listOfRanges->start);    
-   
+    result=str_replace(result,"<task_name>",task_beamer->title);
+
+    sprintf(str, "%d", task_beamer->listOfRanges->start);
+
     result=str_replace(result,"<start>",str);
-    sprintf(str, "%d", task->listOfRanges->end); 
+    sprintf(str, "%d", task_beamer->listOfRanges->end);
     result=str_replace(result,"<end>",str);
-    Range*cursor=task->listOfRanges->next;
+    Range*cursor=task_beamer->listOfRanges->next;
     while(cursor!=NULL){
         result=strcat(result,generateLatexForRange(cursor));
         cursor=cursor->next;
@@ -321,15 +321,15 @@ char* generateLatexForAlgorithm(Algorithm* algorithm){
     char* taskString;
     char cwd[2000];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
-        result=getFullTextFromFile(strcat(cwd,AlgorithmTemplate));    
+        result=getFullTextFromFile(strcat(cwd,AlgorithmTemplate));
     } else {
         return NULL;
     }
     result=str_replace(result,"<algorithm_name>",algorithm->name);
-    sprintf(str, "%d", algorithm->totalTime); 
+    sprintf(str, "%d", algorithm->totalTime);
     result=str_replace(result,"<total_time_units>",str);
 
-    Task* cursor=algorithm->listOfTasks;
+    TaskBeamer* cursor=algorithm->listOfTasks;
     taskString=generateLatexForTask(cursor);
     cursor=cursor->next;
     while(cursor!=NULL){
@@ -343,7 +343,7 @@ char* generateLatexForAlgorithm(Algorithm* algorithm){
 void calculateLeisureRanges(Algorithm* algorithm_){
     int * flags=(int*)malloc(sizeof(int) * algorithm_->totalTime+1);
     int i,j;
-    Task* cursorTask=algorithm_->listOfTasks;
+    TaskBeamer* cursorTask=algorithm_->listOfTasks;
     Range* cursorRange;
 
     while (cursorTask!=NULL)
@@ -369,7 +369,7 @@ void calculateLeisureRanges(Algorithm* algorithm_){
             }
         }
     }
-    
+
 }
 
 
@@ -377,7 +377,7 @@ void generateLatexForBeamer(BeamerPresentation * beamerBuilder ){
     char* algorithmsFile;
     char* outPutPath;
     char cwd[2000];
-   
+
     Algorithm* cursor=beamerBuilder->listOfAlgorithms;
     if(detectLeisureTime==1){
         calculateLeisureRanges(cursor);
@@ -391,14 +391,14 @@ void generateLatexForBeamer(BeamerPresentation * beamerBuilder ){
         algorithmsFile=strcat(algorithmsFile,generateLatexForAlgorithm(cursor));
         cursor=cursor->next;
     }
-    
+
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
-        outPutPath=strcat(cwd,OUTPUT);    
+        outPutPath=strcat(cwd,OUTPUT);
     } else {
         printf("Error traying to read local path");
     }
     printf("%s\n%s\n",outPutPath,algorithmsFile);
-    
+
     writeFile(outPutPath,algorithmsFile);
-    
+
 }

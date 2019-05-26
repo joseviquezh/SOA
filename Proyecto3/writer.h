@@ -24,7 +24,7 @@ struct task
     Range * listOfRanges;
     struct task * next;
 };
-typedef struct task Task;
+typedef struct task TaskBeamer;
 
 struct algorithm
 {
@@ -47,19 +47,19 @@ typedef struct beamerBuilder BeamerPresentation;
 
 
 Algorithm* pickAlgorithmByName(BeamerPresentation*presentation, char* nameOfAlgorithm);
-Task* pickTaskByName(Algorithm * algorithm, char* nameOfTask);
+TaskBeamer* pickTaskByName(Algorithm * algorithm, char* nameOfTask);
 
 Range * rangeBuilder(int start,int end);
-Task * taskBuilder(char * name, Range* listOfRanges);
-Algorithm * algorithmBuilder(char * name, int totalTime, Task* listOfTasks);
+TaskBeamer * taskBuilder(char * name, Range* listOfRanges);
+Algorithm * algorithmBuilder(char * name, int totalTime, TaskBeamer* listOfTasks);
 BeamerPresentation * beamerBuilder();
 Range * addRangeToList(int start,int end, Range* listOfRanges);
-Task * addTaskToList(char * name, Range * listOfRanges, Task* listOfTasks);
+TaskBeamer * addTaskToList(char * name, Range * listOfRanges, TaskBeamer* listOfTasks);
 char *str_replace(char *orig, char *rep, char *with);
 char* getFullTextFromFile(char* fileName);
 void writeFile(char* fileName, char* content);
 char * generateLatexForRange(Range*range);
-char * generateLatexForTask(Task*task);
+char * generateLatexForTask(TaskBeamer*task);
 char* generateLatexForAlgorithm(Algorithm* algorithm);
 void calculateLeisureRanges(Algorithm* algorithm_);
 void generateLatexForBeamer(BeamerPresentation * beamerBuilder );
@@ -69,4 +69,4 @@ void insertNewSequenceRange(BeamerPresentation* presentation,char* algorithmName
 void insertNewRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int start,int end);
 void insertNewTask(BeamerPresentation* presentation,char* algorithmName,char* newTaskName);
 void insertNewAlgorithm(BeamerPresentation* presentation,char* algorithmName,int totalTime);
- 
+
