@@ -64,6 +64,7 @@ char* generateLatexForAlgorithm(Algorithm* algorithm);
 void generateLatexForBeamer(BeamerPresentation * beamerBuilder );
 
 
+void insertNewSequenceRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int cTime,int period,int max);
 void insertNewRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int start,int end);
 void insertNewTask(BeamerPresentation* presentation,char* algorithmName,char* newTaskName);
 void insertNewAlgorithm(BeamerPresentation* presentation,char* algorithmName,int totalTime);

@@ -36,6 +36,40 @@ void generateLatexForAlgorithmTest(){
     printf("%s",line);
 }
 
+
+
+void generateLatexForBeamerTestAll(){
+    BeamerPresentation* presentation=beamerBuilder();
+    insertNewAlgorithm(presentation,"Todos",40);
+
+    insertNewTask(presentation,"Todos","RM Process 1");
+    insertNewSequenceRange(presentation,"Todos","RM Process 1",3,5,40);
+
+    insertNewTask(presentation,"Todos","RM Process 2");
+    insertNewSequenceRange(presentation,"Todos","RM Process 2",2,5,40);
+
+    insertNewTask(presentation,"Todos","No RM 1");
+    insertNewSequenceRange(presentation,"Todos","No RM 1",7,10,40);
+
+    insertNewTask(presentation,"Todos","No RM 2");
+    insertNewSequenceRange(presentation,"Todos","No RM 2",3,5,40);
+
+    insertNewTask(presentation,"Todos","Otro P1");
+    insertNewSequenceRange(presentation,"Todos","Otro P1",3,8,40);
+
+
+    insertNewTask(presentation,"Todos","Otro P2");
+    insertNewSequenceRange(presentation,"Todos","Otro P2",3,4,40);
+
+
+
+    generateLatexForBeamer(presentation);
+}
+
+
+
+
+
 void generateLatexForBeamerTest(){
     BeamerPresentation* presentation=beamerBuilder();
     insertNewAlgorithm(presentation,"AlgorithmNameTest",20);
@@ -73,9 +107,6 @@ void generateLatexForBeamerTest(){
     insertNewRange(presentation,"AlgorithmNameTest2","TaskTest2",4,7);
     insertNewRange(presentation,"AlgorithmNameTest2","TaskTest2",9,13);
 
-
-
-
     insertNewAlgorithm(presentation,"AlgorithmNameTest3",25);
 
     insertNewTask(presentation,"AlgorithmNameTest3","TaskTest");
@@ -85,15 +116,11 @@ void generateLatexForBeamerTest(){
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",4,7);
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",9,13);
 
-
     insertNewTask(presentation,"AlgorithmNameTest3","TaskTest2");
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",15,17);
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",2,3);
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",4,7);
     insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",9,13);
-
-
-
 
     generateLatexForBeamer(presentation);
 }
@@ -112,5 +139,5 @@ int main (int argc, char *argv[])
     generateLatexForAlgorithmTest();
 
     printf("\nTesting Saving File\n");
-    generateLatexForBeamerTest();
+    generateLatexForBeamerTestAll();
 }

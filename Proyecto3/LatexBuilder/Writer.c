@@ -196,7 +196,22 @@ Task* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
 
 
 
-
+void insertNewSequenceRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int cTime,int period,int max){
+    Algorithm* algorithm=pickAlgorithmByName(presentation,algorithmName);
+    Task* task=pickTaskByName(algorithm,taskName);
+    int indicator=period;
+    while (indicator+cTime<max)
+    {
+        if(task->listOfRanges==NULL){
+             task->listOfRanges=rangeBuilder(indicator,indicator+cTime);
+        }else{
+             addRangeToList(indicator,indicator+cTime,task->listOfRanges);
+        }   
+        indicator+=period;
+    }
+    
+    
+}
 
 
 void insertNewRange(BeamerPresentation* presentation,char* algorithmName,char* taskName,int start,int end){
