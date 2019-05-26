@@ -255,11 +255,20 @@ char * generateLatexForRange(Range * range){
     char * result;
     char str[10];
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
-    result=str_replace(extraLine,"<color>","aclv");
-    sprintf(str, "%d", range->start);    
-    result=str_replace(result,"<start>",str);
-    sprintf(str, "%d", range->end); 
-    result=str_replace(result,"<end>",str);
+    if(range->start<0&&range->end<0){
+        result=str_replace(extraLine,"<color>","gray");
+        sprintf(str, "%d", range->start*-1);    
+        result=str_replace(result,"<start>",str);
+        sprintf(str, "%d", range->end*-1); 
+        result=str_replace(result,"<end>",str);
+    }
+    else{
+        result=str_replace(extraLine,"<color>","aclv");
+        sprintf(str, "%d", range->start);    
+        result=str_replace(result,"<start>",str);
+        sprintf(str, "%d", range->end); 
+        result=str_replace(result,"<end>",str);
+    }
     return result;
 }
 
@@ -331,21 +340,58 @@ char* generateLatexForAlgorithm(Algorithm* algorithm){
     return result;
 }
 
+void calculateLeisureRanges(Algorithm* algorithm_){
+    int * flags=(int*)malloc(sizeof(int) * algorithm_->totalTime+1);
+    int i,j;
+    Task* cursorTask=algorithm_->listOfTasks;
+    Range* cursorRange;
+
+    while (cursorTask!=NULL)
+    {
+        cursorRange=cursorTask->listOfRanges;
+        while (cursorRange!=NULL)
+        {
+            for (i = cursorRange->start; i <= cursorRange->end; i++)
+            {
+                flags[i]=1661;
+            }
+            cursorRange=cursorRange->next;
+        }
+        cursorTask=cursorTask->next;
+    }
+
+    for(i=1;i<algorithm_->totalTime+1;i++){
+        if(flags[i]!=1661){
+            cursorTask=algorithm_->listOfTasks;
+            while (cursorTask!=NULL){
+                addRangeToList(-i,-i,cursorTask->listOfRanges);
+                cursorTask=cursorTask->next;
+            }
+        }
+    }
+    
+}
 
 
 void generateLatexForBeamer(BeamerPresentation * beamerBuilder ){
     char* algorithmsFile;
     char* outPutPath;
+    char cwd[2000];
    
     Algorithm* cursor=beamerBuilder->listOfAlgorithms;
+    if(detectLeisureTime==1){
+        calculateLeisureRanges(cursor);
+    }
     algorithmsFile=generateLatexForAlgorithm(cursor);
     cursor=cursor->next;
     while(cursor!=NULL){
+        if(detectLeisureTime==1){
+            calculateLeisureRanges(cursor);
+        }
         algorithmsFile=strcat(algorithmsFile,generateLatexForAlgorithm(cursor));
         cursor=cursor->next;
     }
     
-    char cwd[2000];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         outPutPath=strcat(cwd,OUTPUT);    
     } else {

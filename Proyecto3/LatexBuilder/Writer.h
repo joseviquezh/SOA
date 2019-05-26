@@ -9,7 +9,7 @@
 static const char AlgorithmTemplate[] = "/algorithmTemplate.tex";
 static const char OUTPUT[] =   "/algorithmsFile.tex";
 
-
+static const int detectLeisureTime=1;
 struct range
 {
     int start;
@@ -61,6 +61,7 @@ void writeFile(char* fileName, char* content);
 char * generateLatexForRange(Range*range);
 char * generateLatexForTask(Task*task);
 char* generateLatexForAlgorithm(Algorithm* algorithm);
+void calculateLeisureRanges(Algorithm* algorithm_);
 void generateLatexForBeamer(BeamerPresentation * beamerBuilder );
 
 
