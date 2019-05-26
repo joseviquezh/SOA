@@ -76,6 +76,25 @@ void generateLatexForBeamerTest(){
 
 
 
+    insertNewAlgorithm(presentation,"AlgorithmNameTest3",25);
+
+    insertNewTask(presentation,"AlgorithmNameTest3","TaskTest");
+    
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",15,17);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",2,3);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",4,7);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest",9,13);
+
+
+    insertNewTask(presentation,"AlgorithmNameTest3","TaskTest2");
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",15,17);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",2,3);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",4,7);
+    insertNewRange(presentation,"AlgorithmNameTest3","TaskTest2",9,13);
+
+
+
+
     generateLatexForBeamer(presentation);
 }
 

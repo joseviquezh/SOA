@@ -6,8 +6,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static const char AlgorithmTemplate[] = "/LatexBuilder/algorithmTemplate.tex";
-static const char OUTPUT[] =   "/LatexBuilder/algorithmTemplateOutput.tex";
+static const char AlgorithmTemplate[] = "/algorithmTemplate.tex";
+static const char OUTPUT[] =   "/algorithmsFile.tex";
 
 
 struct range
