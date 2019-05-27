@@ -9,7 +9,7 @@
 static const char AlgorithmTemplate[] = "/algorithmTemplate.tex";
 static const char OUTPUT[] =   "/algorithmsFile.tex";
 
-static const int detectLeisureTime=1;
+static const int detectLeisureTime=0;
 struct range
 {
     int start;

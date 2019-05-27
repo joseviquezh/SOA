@@ -4,7 +4,12 @@
 
 
 Range * rangeBuilder(int start,int end){
+ if(start>end){
+    printf("ERROR: RANGE START CAN NOT BET MORE END--- START: %d    END: %d",start,end);
+    return NULL;       
+ }
  Range* node=(Range*) malloc(sizeof (Range));
+
  node->start=start;
  node->end=end;
  node->next=NULL;
@@ -34,11 +39,6 @@ BeamerPresentation * beamerBuilder(){
 }
 
 Range * addRangeToList(int start,int end, Range* listOfRanges){
-  if(listOfRanges==NULL)
-  {
-    listOfRanges=rangeBuilder(start,end);
-    return listOfRanges;
-  }
   Range* cursor=listOfRanges;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -48,11 +48,6 @@ Range * addRangeToList(int start,int end, Range* listOfRanges){
 }
 
 TaskBeamer * addTaskToList(char * name, Range * listOfRanges, TaskBeamer* listOfTasks){
-  if(listOfTasks==NULL)
-  {
-    listOfTasks=taskBuilder(name,listOfRanges);
-    return listOfTasks;
-  }
   TaskBeamer* cursor=listOfTasks;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -62,11 +57,6 @@ TaskBeamer * addTaskToList(char * name, Range * listOfRanges, TaskBeamer* listOf
 }
 
 Algorithm * addAlgorithmToList(char * name,int totalTime, TaskBeamer* listOfTasks, Algorithm* listOfAlgorithms){
-  if(listOfAlgorithms==NULL)
-  {
-    listOfAlgorithms=algorithmBuilder(name, totalTime,listOfTasks);
-    return listOfAlgorithms;
-  }
   Algorithm* cursor=listOfAlgorithms;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -181,6 +171,7 @@ Algorithm* pickAlgorithmByName(BeamerPresentation*presentation, char* nameOfAlgo
         }
         cursor=cursor->next;
     }
+    printf("ERROR!!!! THERE IS NO ALGORITHM CALLED: %s",nameOfAlgorithm);
     return NULL;
 }
 TaskBeamer* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
@@ -191,6 +182,10 @@ TaskBeamer* pickTaskByName(Algorithm * algorithm, char* nameOfTask){
         }
         cursor=cursor->next;
     }
+    if(algorithm!=NULL)
+        printf("ERROR!!!! THERE IS NO TASK CALLED: %s \n IN THE ALGORITHM CALLED: %s",nameOfTask, algorithm->name);
+    else
+        printf("ERROR!!!! Algoritm can not be null");
     return NULL;
 }
 
@@ -255,12 +250,26 @@ char * generateLatexForRange(Range * range){
     char * result;
     char str[10];
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
+    if(range==NULL){
+        printf("ERROR: RANGE EXPECTED BUT GOT NULL");
+        return NULL;
+    }
     if(range->start<0&&range->end<0){
-        result=str_replace(extraLine,"<color>","yellow!20, draw=none");
-        sprintf(str, "%d", range->start*-1);
-        result=str_replace(result,"<start>",str);
-        sprintf(str, "%d", range->end*-1);
-        result=str_replace(result,"<end>",str);
+        if(range->start<-1000&&range->end<-1000)
+        {
+            result=str_replace(extraLine,"<color>","red!20, rounded corners=7pt, draw=none");
+            sprintf(str, "%d", range->start*-1-1000);
+            result=str_replace(result,"<start>",str);
+            sprintf(str, "%d", range->end*-1-1000);
+            result=str_replace(result,"<end>",str);
+        }else
+        {
+            result=str_replace(extraLine,"<color>","yellow!20, draw=none");
+            sprintf(str, "%d", range->start*-1);
+            result=str_replace(result,"<start>",str);
+            sprintf(str, "%d", range->end*-1);
+            result=str_replace(result,"<end>",str);
+        }
     }
     else{
         result=str_replace(extraLine,"<color>","aclv");
@@ -277,14 +286,21 @@ int getRandomRGBValue(){
     return r%256;
 }
 
-char * generateLatexForTask(TaskBeamer*task_beamer){
+char *  generateLatexForTask(TaskBeamer*task_beamer){
     char * result;
     char str[10];
     char * mainLine="\\definecolor{aclv}{RGB}{<red>,<green>,<blue>}  \\ganttbar[ bar/.append style={fill=<color>}]{<task_name>}{<start>}{<end>}";
     char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
 
-    result=str_replace(mainLine,"<color>","aclv");
+    if(task_beamer==NULL){
+        printf("ERROR: Expected task but got NULL ptr");
+        return NULL;
+    }else if(task_beamer->listOfRanges==NULL){
+        printf("ERROR: Range queue is empty for task %s",task_beamer->title);
+        return NULL;
+    }
 
+    result=str_replace(mainLine,"<color>","aclv");
 
     sprintf(str, "%d", getRandomRGBValue());
     result=str_replace(result,"<red>",str);
@@ -304,11 +320,15 @@ char * generateLatexForTask(TaskBeamer*task_beamer){
     sprintf(str, "%d", task_beamer->listOfRanges->end);
     result=str_replace(result,"<end>",str);
     Range*cursor=task_beamer->listOfRanges->next;
+
+printf("\n----------------------------------IN: generateLatexForTask\n");
     while(cursor!=NULL){
         result=strcat(result,generateLatexForRange(cursor));
         cursor=cursor->next;
     }
     result=strcat(result,"\\\\\n");
+
+printf("\n----------------------------------IN: generateLatexForTask\n%s",result);
     return result;
 }
 
@@ -320,31 +340,71 @@ char* generateLatexForAlgorithm(Algorithm* algorithm){
     char* result;
     char* taskString;
     char cwd[2000];
+    int limitPerFrame=5;
+    
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         result=getFullTextFromFile(strcat(cwd,AlgorithmTemplate));
     } else {
         return NULL;
     }
+
+    if(algorithm==NULL){
+        printf("ERROR: Expected algortim but git NULL ptr");
+        return NULL;
+    }else if(algorithm->listOfTasks==NULL){
+        printf("ERROR: Task queue is empty for algorithm %s",algorithm->name);
+        return NULL;
+    }
+
     result=str_replace(result,"<algorithm_name>",algorithm->name);
     sprintf(str, "%d", algorithm->totalTime);
     result=str_replace(result,"<total_time_units>",str);
 
     TaskBeamer* cursor=algorithm->listOfTasks;
+
+printf("\n----------------------------------IN: generateLatexForAlgorithm line 344\n");
     taskString=generateLatexForTask(cursor);
+printf("\n----------------------------------IN: generateLatexForAlgorithm line 346\n");
+    
     cursor=cursor->next;
     while(cursor!=NULL){
+printf("\n----------------------------------LOOP: generateLatexForAlgorithm line 342 %s %s\n",algorithm->name,cursor->title);
         taskString=strcat(taskString,generateLatexForTask(cursor));
         cursor=cursor->next;
+        if(limitPerFrame--<=0){
+            break;
+        }
     }
+    printf("\n----------------------------------IN: generateLatexForAlgorithm line 364\n");
     result=str_replace(result,"<ganttbars>",taskString);
+printf("\n----------------------------------IN: generateLatexForAlgorithm line 366\n");
+    if(limitPerFrame+1<=0&&cursor!=NULL){
+
+printf("\n----------------------------------IN:RecursiveStep\n");
+        result=strcat(result,generateLatexForAlgorithm(algorithmBuilder(
+            algorithm->name,algorithm->totalTime,cursor
+        )));
+    }
     return result;
 }
 
 void calculateLeisureRanges(Algorithm* algorithm_){
-    int * flags=(int*)malloc(sizeof(int) * algorithm_->totalTime+1);
+
+    if(algorithm_==NULL){
+        printf("ERROR: Algoritm is null in calculateLeisureTanges.");
+    }else if(algorithm_->listOfTasks==NULL){
+        printf("ERROR: There is no task for algoritmhm: %s",algorithm_->name);
+    }
+
+    int local_Flags[100];
     int i,j;
     TaskBeamer* cursorTask=algorithm_->listOfTasks;
     Range* cursorRange;
+
+    for(i=0;i<algorithm_->totalTime+1;i++){
+        local_Flags[i]=0;
+    }
+
 
     while (cursorTask!=NULL)
     {
@@ -353,7 +413,8 @@ void calculateLeisureRanges(Algorithm* algorithm_){
         {
             for (i = cursorRange->start; i <= cursorRange->end; i++)
             {
-                flags[i]=1661;
+                printf("i=%d\n",i);
+                local_Flags[i]=1661;
             }
             cursorRange=cursorRange->next;
         }
@@ -361,7 +422,7 @@ void calculateLeisureRanges(Algorithm* algorithm_){
     }
 
     for(i=1;i<algorithm_->totalTime+1;i++){
-        if(flags[i]!=1661){
+        if(local_Flags[i]!=1661){
             cursorTask=algorithm_->listOfTasks;
             while (cursorTask!=NULL){
                 addRangeToList(-i,-i,cursorTask->listOfRanges);
@@ -370,6 +431,82 @@ void calculateLeisureRanges(Algorithm* algorithm_){
         }
     }
 
+/*
+    int * flags=(int*)malloc(sizeof(int) * algorithm_->totalTime+1);
+    int i,j,k=1000;
+
+    TaskBeamer* cursorTask=algorithm_->listOfTasks;
+    Range* cursorRange;
+
+
+    printf("\n------------------------------------------------aa");
+    for(i=0;i<algorithm_->totalTime+1;i++){
+        flags[i]=0;
+        printf("Flag[%d]=%d\n",i,flags[i]);
+    }
+
+    while (cursorTask!=NULL)
+    {
+        cursorRange=cursorTask->listOfRanges;
+        while (cursorRange!=NULL)
+        {
+            for (i = cursorRange->start; i <= cursorRange->end; i++)
+            {
+                if(flags[i]==k){
+                    flags[i]=999;
+                }else if(flags[i]!=999){
+                    flags[i]=k;
+                } 
+            }
+            cursorRange=cursorRange->next;
+        }
+        
+        for(i=1;i<=algorithm_->totalTime;i++){
+            if(flags[i]==999){
+               flags[i]=k;
+               if(cursorTask->listOfRanges==NULL){
+                   cursorTask->listOfRanges=rangeBuilder(-i-1000,-i-1000);
+               }
+               else{
+                  addRangeToList(-i-1000,-i-1000,cursorTask->listOfRanges);
+                }
+            }
+        }
+
+        k+=1000;
+        cursorTask=cursorTask->next;
+    }
+    
+    printf("\n------------------------------------------------bb");
+    for(i=0;i<algorithm_->totalTime+1;i++){
+        printf("Flag[%d]=%d\n",i,flags[i]);
+    }
+
+    for(i=1;i<=algorithm_->totalTime;i++){
+        if(flags[i]<999){
+            cursorTask=algorithm_->listOfTasks;
+            while (cursorTask!=NULL){
+
+    printf("\n------------------------------------------------ADDING %d %d",-i,-i);
+               if(cursorTask->listOfRanges==NULL){
+                   cursorTask->listOfRanges=rangeBuilder(-i,-i);
+               }
+               else
+                {
+                    addRangeToList(-i,-i,cursorTask->listOfRanges);
+                }
+               cursorTask=cursorTask->next;
+            }
+        }
+    }
+
+    printf("\n------------------------------------------------cc");
+    for(i=0;i<algorithm_->totalTime+1;i++){
+        printf("Flag[%d]=%d\n",i,flags[i]);
+    }
+    free(flags);
+    flags=NULL;
+    */
 }
 
 
@@ -379,15 +516,25 @@ void generateLatexForBeamer(BeamerPresentation * beamerBuilder ){
     char cwd[2000];
 
     Algorithm* cursor=beamerBuilder->listOfAlgorithms;
+    if(cursor==NULL){
+        printf("ERROR!! THERE IS NO ALGORITM IN BEAMER STRUCT");
+        return;
+    }
     if(detectLeisureTime==1){
         calculateLeisureRanges(cursor);
     }
+    
+printf("\n----------------------------------GenerateLatexForAlgoritm\n");
     algorithmsFile=generateLatexForAlgorithm(cursor);
     cursor=cursor->next;
     while(cursor!=NULL){
+printf("\n----------------------------------LOOP:Calculate leisure time\n");
+    
         if(detectLeisureTime==1){
             calculateLeisureRanges(cursor);
         }
+        
+printf("\n----------------------------------LOOP: GenerateLatexForAlgoritm\n");
         algorithmsFile=strcat(algorithmsFile,generateLatexForAlgorithm(cursor));
         cursor=cursor->next;
     }

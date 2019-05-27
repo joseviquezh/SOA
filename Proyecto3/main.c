@@ -17,6 +17,9 @@
 #define NUM_ALGS 3
 #define NUM_TASKS 6
 
+static const int MAX_DISPLAY_UNITS=40;
+
+
 struct algorithms_conf{
     gint task_number;
     int current_selection;
@@ -91,10 +94,9 @@ bool load_config_file(char* file)
         }
 
         fclose(fin);
-
+        sleep(3);
         return true;
     }
-
     fclose(fin);
     return false;
 }
@@ -190,8 +192,8 @@ execute_button_clicked (GtkButton *button)
 {
     BeamerPresentation* presentation=beamerBuilder();
     char * new_str;
-    char str[10];
-    char task_list[6][8]={"Task 1","Task 2","Task 3","Task 4","Task 5","Task 6"};
+    char str[100];
+    //char task_list[6][8]={"Task 1","Task 2","Task 3","Task 4","Task 5","Task 6"};
     int n = config->task_number;
 
     g_print( "\nExecuting Selected Algorithms\n");
@@ -227,11 +229,11 @@ execute_button_clicked (GtkButton *button)
             }
             QueueItem * result_rm = execute_algorithm(RM, &size_result_rm, &mcm);
 
-            printf("mcm: %d\n\n\n\n", mcm);
-            insertNewAlgorithm(presentation,"Results RM", mcm);
+            insertNewAlgorithm(presentation,"Results RM", MAX_DISPLAY_UNITS);
 
             for (int i = 0; i < n; i++) {
-                insertNewTask(presentation,"Results RM", task_list[i]);
+                sprintf(str,"Task %d",i);
+                insertNewTask(presentation,"Results RM", str);
             }
 
             for (int i = 0; i < size_result_rm; i++) {
@@ -241,10 +243,9 @@ execute_button_clicked (GtkButton *button)
                     int index;
                     index = result_rm[i].task.id-1;
                     printf("index: %d\n", index);
-                    char *task_id = malloc(sizeof(task_list[index]));
-                    strcpy(task_id,task_list[index]);
-                    printf("task_id: %s\n", task_id);
-                    insertNewRange(presentation,"Results RM", task_id, i+1, i+1);
+                    sprintf(str,"Task %d",index);
+                    printf("\n-------------------------------------------------------Results RM T %d\n",index);
+                    insertNewRange(presentation,"Results RM", str, i+1, i+1);
                 }
                 else {
                     printf("Free period in elapsed_time = %i\n", i+1);
@@ -266,10 +267,11 @@ execute_button_clicked (GtkButton *button)
             }
             QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf, &mcm);
 
-            insertNewAlgorithm(presentation,"Results EDF",mcm);
+            insertNewAlgorithm(presentation,"Results EDF",MAX_DISPLAY_UNITS);
 
             for (int i = 0; i < n; i++) {
-                insertNewTask(presentation,"Results EDF", task_list[i]);
+                sprintf(str,"Task %d",i);
+                insertNewTask(presentation,"Results EDF", str);
             }
 
             for (int i = 0; i < size_result_edf; i++) {
@@ -279,10 +281,9 @@ execute_button_clicked (GtkButton *button)
                     int index;
                     index = result_edf[i].task.id-1;
                     printf("index: %d\n", index);
-                    char *task_id = malloc(sizeof(task_list[index]));
-                    strcpy(task_id,task_list[index]);
-                    printf("task_id: %s\n", task_id);
-                    insertNewRange(presentation,"Results EDF", task_id, i+1, i+1);
+                    sprintf(str,"Task %d",index);
+                    printf("\n-------------------------------------------------------Results EDF T %d\n",index);
+                    insertNewRange(presentation,"Results EDF", str, i+1, i+1);
                 }
                 else {
                     printf("Free period in elapsed_time = %i\n", i+1);
@@ -304,10 +305,11 @@ execute_button_clicked (GtkButton *button)
             }
             QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf, &mcm);
 
-            insertNewAlgorithm(presentation,"Results LLF",mcm);
+            insertNewAlgorithm(presentation,"Results LLF",MAX_DISPLAY_UNITS);
 
             for (int i = 0; i < n; i++) {
-                insertNewTask(presentation,"Results LLF", task_list[i]);
+                sprintf(str,"Task %d",i);
+                insertNewTask(presentation,"Results LLF", str);
             }
 
             for (int i = 0; i < size_result_llf; i++) {
@@ -317,10 +319,9 @@ execute_button_clicked (GtkButton *button)
                     int index;
                     index = result_llf[i].task.id-1;
                     printf("index: %d\n", index);
-                    char *task_id = malloc(sizeof(task_list[index]));
-                    strcpy(task_id,task_list[index]);
-                    printf("task_id: %s\n", task_id);
-                    insertNewRange(presentation,"Results LLF", task_id, i+1, i+1);
+                    sprintf(str,"Task %d",index);
+                    printf("\n-------------------------------------------------------Results LLF T %d\n",index);
+                    insertNewRange(presentation,"Results LLF", str, i+1, i+1);
                 }
                 else {
                     printf("Free period in elapsed_time = %i\n", i+1);
@@ -332,12 +333,134 @@ execute_button_clicked (GtkButton *button)
         generateLatexForBeamer(presentation);
         system("pdflatex main.tex");
         system("evince main.pdf");
-        free(presentation);
+        //free(presentation);
     }
 
     else {
-    //TODO: Logic to generate beamer with all algorithms in one slide
-        printf("WORK IN PROGRESS\n");
+        int mcm;
+        ///////////////////////////////////////////////////////
+        printf("\n-------------------------------------------------------All in one\n");
+        if (execute_rm == TRUE){
+            int size_result_rm;
+            int test_result = TestRM(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_rm),"FAILED");
+            }
+            QueueItem * result_rm = execute_algorithm(RM, &size_result_rm,&mcm);
+
+        printf("\n-------------------------------------------------------All algorithms\n");
+            insertNewAlgorithm(presentation,"All algorithms",MAX_DISPLAY_UNITS);
+
+            for (int i = 0; i < n; i++) {
+                sprintf(str,"RM T %d",i);
+                insertNewTask(presentation,"All algorithms", str);
+            }
+
+            for (int i = 0; i < size_result_rm; i++) {
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_rm[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_rm[i].task.id, i+1);
+                    int index;
+                    index = result_rm[i].task.id-1;
+                    printf("index: %d\n", index);
+                    sprintf(str,"RM T %d",index);
+
+                    printf("\n-------------------------------------------------------RM T %d\n",index);
+                    insertNewRange(presentation,"All algorithms", str, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
+        }
+
+        if (execute_edf == TRUE){
+            int size_result_edf;
+            int test_result = TestEDF(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_edf),"FAILED");
+            }
+            QueueItem * result_edf = execute_algorithm(EDF, &size_result_edf,&mcm);
+
+            //insertNewAlgorithm(presentation,"Results EDF",MAX_DISPLAY_UNITS);
+
+            for (int i = 0; i < n; i++) {
+                sprintf(str,"EDF T %d",i);
+                insertNewTask(presentation,"All algorithms", str);
+            }
+
+            for (int i = 0; i < size_result_edf; i++) {
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_edf[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_edf[i].task.id, i+1);
+                    int index;
+                    index = result_edf[i].task.id-1;
+                    printf("index: %d\n", index);
+                    sprintf(str,"EDF T %d",index);
+                    printf("\n-------------------------------------------------------EDF T %d\n",index);
+                    insertNewRange(presentation,"All algorithms", str, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
+        }
+
+        if (execute_llf == TRUE){
+            int size_result_llf;
+            int test_result = TestLLF(tasks, n);
+            printf("test_result = %i\n\n\n", test_result);
+            if (test_result == 1){
+                gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"PASSED");
+            }
+            else{
+                gtk_label_set_text (GTK_LABEL(gui->check_test_llf),"FAILED");
+            }
+            QueueItem * result_llf = execute_algorithm(LLF, &size_result_llf,&mcm);
+
+            //insertNewAlgorithm(presentation,"Results LLF",MAX_DISPLAY_UNITS);
+
+            for (int i = 0; i < n; i++) {
+                sprintf(str,"LLF T %d",i);
+                insertNewTask(presentation,"All algorithms", str);
+            }
+
+            for (int i = 0; i < size_result_llf; i++) {
+                printf("\n============= Time elapsed %i ==============\n", i);
+                if (!result_llf[i].null) {
+                    printf("Running task: %i in elapsed_time = %i\n", result_llf[i].task.id, i+1);
+                    int index;
+                    index = result_llf[i].task.id-1;
+                    printf("index: %d\n", index);
+                    sprintf(str,"LLF T %d",index);
+                    printf("\n-------------------------------------------------------LLF T %d\n ",index);
+                    insertNewRange(presentation,"All algorithms", str, i+1, i+1);
+                }
+                else {
+                    printf("Free period in elapsed_time = %i\n", i+1);
+                }
+                printf("===========================================\n\n\n");
+            }
+        }
+
+        generateLatexForBeamer(presentation);
+        system("pdflatex main.tex");
+        system("evince main.pdf");
+        //free(presentation);
+        ////////////////////////////////////////////////////////////////////////
+
+
+
     }
 }
 
