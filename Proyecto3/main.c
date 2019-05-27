@@ -359,7 +359,7 @@ execute_button_clicked (GtkButton *button)
                 sprintf(str,"RM T %d",i);
                 insertNewTask(presentation,"All algorithms", str);
             }
-
+            
             for (int i = 0; i < size_result_rm; i++) {
                 printf("\n============= Time elapsed %i ==============\n", i);
                 if (!result_rm[i].null) {

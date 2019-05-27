@@ -1,46 +1,85 @@
-\section{Results RM}
+
+
+\section{All algorithms}
 \begin{frame}
-    \frametitle{Results RM}
+    \frametitle{All algorithms}
     \resizebox{13cm}{!}{
     \begin{ganttchart}
         [vgrid={draw=none, dotted}]
         {1}{40}
         \gantttitle{Time Unit}{40} \\
         \gantttitlelist{1,...,40}{1} \\
-       \definecolor{aclv}{RGB}{103,198,105}  \ganttbar[ bar/.append style={fill=aclv}]{Task 0}{3}{3}\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
-\definecolor{aclv}{RGB}{115,81,255}  \ganttbar[ bar/.append style={fill=aclv}]{Task 1}{4}{4}\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}\ganttbar[inline, bar/.append style={fill=aclv}]{}{14}{14}\\
-\definecolor{aclv}{RGB}{74,236,41}  \ganttbar[ bar/.append style={fill=aclv}]{Task 2}{9}{9}\ganttbar[inline, bar/.append style={fill=aclv}]{}{15}{15}\ganttbar[inline, bar/.append style={fill=aclv}]{}{18}{18}\\
-\definecolor{aclv}{RGB}{205,186,171}  \ganttbar[ bar/.append style={fill=aclv}]{Task 3}{1}{1}\ganttbar[inline, bar/.append style={fill=aclv}]{}{2}{2}\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\ganttbar[inline, bar/.append style={fill=aclv}]{}{16}{16}\ganttbar[inline, bar/.append style={fill=aclv}]{}{17}{17}\\
+       
+\definecolor{aclv}{RGB}{103,198,105} 
+ \ganttbar[ bar/.append style={fill=aclv}]{RM T 0}{1}{1}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
+
+\definecolor{aclv}{RGB}{115,81,255} 
+ \ganttbar[ bar/.append style={fill=aclv}]{RM T 1}{2}{2}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{3}{3}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\\
+
+\definecolor{aclv}{RGB}{74,236,41} 
+ \ganttbar[ bar/.append style={fill=aclv}]{RM T 2}{4}{4}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{9}{9}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\\
+
+\definecolor{aclv}{RGB}{205,186,171} 
+ \ganttbar[ bar/.append style={fill=aclv}]{EDF T 0}{1}{1}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
+
+\definecolor{aclv}{RGB}{242,251,227} 
+ \ganttbar[ bar/.append style={fill=aclv}]{EDF T 1}{2}{2}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{3}{3}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\\
+
+\definecolor{aclv}{RGB}{70,124,194} 
+ \ganttbar[ bar/.append style={fill=aclv}]{EDF T 2}{4}{4}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{9}{9}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\\
+
+\definecolor{aclv}{RGB}{84,248,27} 
+ \ganttbar[ bar/.append style={fill=aclv}]{LLF T 0}{1}{1}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
 
     \end{ganttchart}}
-\end{frame}\section{Results EDF}
-\begin{frame}
-    \frametitle{Results EDF}
-    \resizebox{13cm}{!}{
-    \begin{ganttchart}
-        [vgrid={draw=none, dotted}]
-        {1}{40}
-        \gantttitle{Time Unit}{40} \\
-        \gantttitlelist{1,...,40}{1} \\
-       \definecolor{aclv}{RGB}{242,251,227}  \ganttbar[ bar/.append style={fill=aclv}]{Task 0}{3}{3}\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
-\definecolor{aclv}{RGB}{70,124,194}  \ganttbar[ bar/.append style={fill=aclv}]{Task 1}{4}{4}\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}\\
-\definecolor{aclv}{RGB}{84,248,27}  \ganttbar[ bar/.append style={fill=aclv}]{Task 2}{9}{9}\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\ganttbar[inline, bar/.append style={fill=aclv}]{}{14}{14}\ganttbar[inline, bar/.append style={fill=aclv}]{}{15}{15}\\
-\definecolor{aclv}{RGB}{232,231,141}  \ganttbar[ bar/.append style={fill=aclv}]{Task 3}{1}{1}\ganttbar[inline, bar/.append style={fill=aclv}]{}{2}{2}\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\\
+\end{frame}
 
-    \end{ganttchart}}
-\end{frame}\section{Results LLF}
+
+\section{All algorithms}
 \begin{frame}
-    \frametitle{Results LLF}
+    \frametitle{All algorithms}
     \resizebox{13cm}{!}{
     \begin{ganttchart}
         [vgrid={draw=none, dotted}]
         {1}{40}
         \gantttitle{Time Unit}{40} \\
         \gantttitlelist{1,...,40}{1} \\
-       \definecolor{aclv}{RGB}{118,90,46}  \ganttbar[ bar/.append style={fill=aclv}]{Task 0}{3}{3}\ganttbar[inline, bar/.append style={fill=aclv}]{}{7}{7}\ganttbar[inline, bar/.append style={fill=aclv}]{}{13}{13}\\
-\definecolor{aclv}{RGB}{99,51,159}  \ganttbar[ bar/.append style={fill=aclv}]{Task 1}{4}{4}\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}\\
-\definecolor{aclv}{RGB}{201,154,102}  \ganttbar[ bar/.append style={fill=aclv}]{Task 2}{9}{9}\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\ganttbar[inline, bar/.append style={fill=aclv}]{}{14}{14}\ganttbar[inline, bar/.append style={fill=aclv}]{}{15}{15}\\
-\definecolor{aclv}{RGB}{50,13,183}  \ganttbar[ bar/.append style={fill=aclv}]{Task 3}{1}{1}\ganttbar[inline, bar/.append style={fill=aclv}]{}{2}{2}\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\\
+       
+\definecolor{aclv}{RGB}{232,231,141} 
+ \ganttbar[ bar/.append style={fill=aclv}]{LLF T 1}{2}{2}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{3}{3}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{10}{10}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{12}{12}\\
+
+\definecolor{aclv}{RGB}{118,90,46} 
+ \ganttbar[ bar/.append style={fill=aclv}]{LLF T 2}{4}{4}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{5}{5}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{6}{6}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{8}{8}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{9}{9}
+\ganttbar[inline, bar/.append style={fill=aclv}]{}{11}{11}\\
 
     \end{ganttchart}}
 \end{frame}

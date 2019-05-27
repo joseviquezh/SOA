@@ -39,6 +39,7 @@ BeamerPresentation * beamerBuilder(){
 }
 
 Range * addRangeToList(int start,int end, Range* listOfRanges){
+  if(start>40||end>40)return NULL;
   Range* cursor=listOfRanges;
   while(cursor->next!=NULL){
       cursor=cursor->next;
@@ -249,8 +250,8 @@ void insertNewAlgorithm(BeamerPresentation* presentation,char* algorithmName,int
 char * generateLatexForRange(Range * range){
     char * result;
     char str[10];
-    char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
-    if(range==NULL){
+    char * extraLine="\n\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
+    /*if(range==NULL){
         printf("ERROR: RANGE EXPECTED BUT GOT NULL");
         return NULL;
     }
@@ -271,13 +272,14 @@ char * generateLatexForRange(Range * range){
             result=str_replace(result,"<end>",str);
         }
     }
-    else{
+    else{*/
+        printf("Start: %d    End: %d",range->start,range->end);
         result=str_replace(extraLine,"<color>","aclv");
         sprintf(str, "%d", range->start);
         result=str_replace(result,"<start>",str);
         sprintf(str, "%d", range->end);
         result=str_replace(result,"<end>",str);
-    }
+    //}
     return result;
 }
 
@@ -289,8 +291,8 @@ int getRandomRGBValue(){
 char *  generateLatexForTask(TaskBeamer*task_beamer){
     char * result;
     char str[10];
-    char * mainLine="\\definecolor{aclv}{RGB}{<red>,<green>,<blue>}  \\ganttbar[ bar/.append style={fill=<color>}]{<task_name>}{<start>}{<end>}";
-    char * extraLine="\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
+    char * mainLine="\n\\definecolor{aclv}{RGB}{<red>,<green>,<blue>} \n \\ganttbar[ bar/.append style={fill=<color>}]{<task_name>}{<start>}{<end>}";
+    char * extraLine="\n\\ganttbar[inline, bar/.append style={fill=<color>}]{}{<start>}{<end>}";
 
     if(task_beamer==NULL){
         printf("ERROR: Expected task but got NULL ptr");
